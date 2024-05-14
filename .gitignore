@@ -1,0 +1,10 @@
+fparse
+*.cc
+*.o
+*.gv
+*.output
+*.hh
+.vscode/*
+log.txt
+error.txt
+sym_tables.txt
