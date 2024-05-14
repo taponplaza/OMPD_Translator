@@ -14,10 +14,12 @@ IS                      ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 #include <fstream>
 #include "y.tab.hh"
 
+extern void parseOpenMP(const char* _input, void * _exprParse(const char*));
 extern void yyerror(const char *);
 
 static void count(void);
 static void comment(void);
+static char * get_pragma();
 // static int check_type(void);
 
 extern ofstream logFile;
@@ -37,6 +39,13 @@ extern int error_count;
 %option nounput
 
 %%
+"#"           {
+                char * line = get_pragma();
+                char * pragma = strstr(line, "pragma");
+                if (pragma != NULL) {
+                    parseOpenMP(pragma+7, NULL);
+                }
+              }
 "/*"			{ comment(); }
 "//"[^\n]*              { /* consume //-comment */ }
 
@@ -171,13 +180,33 @@ int yywrap(void)
 }
 
 
+char * get_pragma(void)
+{
+        char c;
+        char * line = (char *) malloc(256);
+        int i=0;
+
+        ECHO;
+
+        while ((c = yyinput()) != 0 && (c != '\n'))   /* (EOF maps to 0) */
+        {
+                if (yyout != NULL)
+                        fputc(c, yyout);
+                line[i++] = c;
+        }
+        if (yyout != NULL)
+                fputc(c, yyout);
+        line[i] = 0;
+        return(line);
+}
+
 void comment(void)
 {
 	char c, prev = 0;
 
         ECHO;
   
-while ((c = yyinput()) != 0)      /* (EOF maps to 0) */
+	while ((c = yyinput()) != 0)      /* (EOF maps to 0) */
 	{
 		if (yyout != NULL)
 			fputc(c, yyout);
