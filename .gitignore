@@ -8,3 +8,4 @@ fparse
 log.txt
 error.txt
 sym_tables.txt
+output.c
