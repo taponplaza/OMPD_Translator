@@ -45,5 +45,5 @@ main.o: main.cc
 	$(CC) -c $(CFLAGS) main.cc
 
 clean:
-	rm -f $(OBJS) core y.* lex.yy.* ompparser.output ompparser.gv ompparser.dot ompparser.hh ompparser.cc omplexer.cc  fparse sym_tables.txt log.txt error.txt
+	rm -f $(OBJS) core y.* lex.yy.* ompparser.output ompparser.gv ompparser.dot ompparser.hh ompparser.cc omplexer.cc  fparse sym_tables.txt log.txt error.txt output.c
 
