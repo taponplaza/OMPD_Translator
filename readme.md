@@ -18,11 +18,12 @@ To run the compiler, follow these steps:
 1. Open a terminal in the directory where the compiler is located.
 2. Compile the source code using the compiler:
     ```
-    ./fparse input.c [DEBUG]
+    ./fparse input.c [DEBUG] [output.c]
     ```
     Where:
     - `input.c`  is the input file to be processed.
     - `DEBUG` is a flag option to start debuggin the insertions on the symbols table.
+    - `output.c` output file option.
     
 
 Thank you for using our C compiler!
