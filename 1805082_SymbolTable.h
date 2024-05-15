@@ -351,7 +351,7 @@ public:
                 // cout << "< " << currSymbol->getSymbolName() << " : " << currSymbol->getSymbolType() << " > ";
                 sym_tables << "| ";
                 if(currSymbol->isStruct()){
-                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << currSymbol->getVariableType() <<  " , " << currSymbol->getParamListString() << " >";
+                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Struct Symbol" << " , " << currSymbol->getVariableType() <<  " , " << currSymbol->getParamListString() << " >";
                 }
                 else if(currSymbol->isArray()){
                     sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Array Symbol" << " , " << currSymbol->getVariableType() <<  " < " << currSymbol->getSizeList() << " > " << " >";

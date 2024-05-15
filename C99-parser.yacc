@@ -3,6 +3,7 @@
 #include "1805082_SymbolTable.h"
 void yyerror(char const *s);
 extern int yylex (void);
+extern FILE *yyout;
 extern int yydebug;
 
 int error_count = 0;
@@ -194,6 +195,11 @@ declaration
 		for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
 			// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
 			$2->at(i)->setVariableType($1->getSymbolType());
+			if($1->isStruct()){
+				$2->at(i)->setIsStruct(true);
+				$2->at(i)->setVariableType("STRUCT");
+				$2->at(i)->setParamList($1->getParamList());
+			}
 			SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
 			$$->push_back(symbol);
 			table.insert($2->at(i));
@@ -276,10 +282,17 @@ struct_or_union_specifier
 		}
 	
 	}
-	| struct_or_union '{' struct_declaration_list '}'
+	| struct_or_union '{' struct_declaration_list '}'{
+		$1->setIsStruct(true);
+		$1->setVariableType("STRUCT");
+		$1->setParamList($3);
+		
+		$$ = $1;
+	}
 	| struct_or_union IDENTIFIER
 	{ 
 		$2->setIsStruct(true);
+		$2->setVariableType("STRUCT");
 		table.insert($2);
 		// if (table.insert($2)) {
 		// 	logFile << "Inserted: " << $2->getSymbolName() << " in scope " << table.printScopeId() << endl;
@@ -330,10 +343,10 @@ struct_declaration
 	;
 
 specifier_qualifier_list 
-	: type_qualifier
-	| type_qualifier specifier_qualifier_list
-	| type_specifier  
-	| type_specifier specifier_qualifier_list
+	: type_qualifier { $$ = $1; }
+	| type_qualifier specifier_qualifier_list { $$ = $2; }
+	| type_specifier   { $$ = $1; }
+	| type_specifier specifier_qualifier_list { $$ = $2; }
 	;
 
 struct_declarator_list
