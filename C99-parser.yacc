@@ -2,14 +2,16 @@
 #include<bits/stdc++.h>
 #include "1805082_SymbolTable.h"
 void yyerror(char const *s);
+void write_MPI_Type_struct(SymbolInfo* symbol);
+
 extern int yylex (void);
 extern FILE *yyout;
 extern int yydebug;
+extern bool declarePragma;
 
 int error_count = 0;
 
-extern ofstream logFile;
-extern ofstream errFile;
+extern ofstream logFile, errFile, generatedFile;
 
 SymbolTable table(30);
 %}
@@ -42,7 +44,7 @@ SymbolTable table(30);
 %type<sym> multiplicative_expression additive_expression shift_expression
 %type<sym> relational_expression equality_expression and_expression
 %type<sym> exclusive_or_expression inclusive_or_expression logical_and_expression
-%type<sym> logical_or_expression conditional_expression assignment_expression
+%type<sym> logical_or_expression conditional_expression assignment_expression function_specifier
 %type<symList> init_declarator_list parameter_type_list parameter_list struct_declaration_list struct_declarator_list struct_declaration
 %type<symList> declaration_list identifier_list declaration 
 
@@ -197,33 +199,47 @@ declaration
 			$2->at(i)->setVariableType($1->getSymbolType());
 			if($1->isStruct()){
 				$2->at(i)->setIsStruct(true);
-				$2->at(i)->setVariableType("STRUCT");
 				$2->at(i)->setParamList($1->getParamList());
+				if(declarePragma){
+					write_MPI_Type_struct($2->at(i));
+				}
 			}
 			SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
 			$$->push_back(symbol);
 			table.insert($2->at(i));
-			// if (table.insert($2->at(i))) {
-			// 	logFile << "Inserted: " << $2->at(i)->getSymbolName() << " in scope " << table.printScopeId() << endl;
-			// }
-			// else {
-			// 	logFile << "Error: " << $2->at(i)->getSymbolName() << " already exists in scope " << endl;
-			// 	errFile << "Error: " << $2->at(i)->getSymbolName() << " already exists in scope " << endl;
-			// 	error_count++;
-			// }
 		}
 	}
 	;
 
 declaration_specifiers
-	: storage_class_specifier
-	| storage_class_specifier declaration_specifiers { $$ = $2; }
+	: storage_class_specifier { $$ = $1; }
+	| storage_class_specifier declaration_specifiers { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
 	| type_specifier { $$ = $1; }
-	| type_specifier declaration_specifiers { $$ = $2; }
-	| type_qualifier
-	| type_qualifier declaration_specifiers { $$ = $2; }
-	| function_specifier
-	| function_specifier declaration_specifiers { $$ = $2; }
+	| type_specifier declaration_specifiers { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
+	| type_qualifier { $$ = $1; }
+	| type_qualifier declaration_specifiers { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
+	| function_specifier { $$ = $1; }
+	| function_specifier declaration_specifiers { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
 	;
 
 init_declarator_list
@@ -266,25 +282,21 @@ struct_or_union_specifier
 	{ 
 		$2->setIsStruct(true);
 		$2->setVariableType($1->getSymbolType());
-		table.insert($2);
-		// if (table.insert($2)) {
-		// 	logFile << "Inserted: " << $2->getSymbolName() << " in scope " << table.printScopeId() << endl;
-		// }else {
-		// 	logFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	errFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	error_count++;
-		// }
 		$2->setParamList($4);
+		table.insert($2);
 		if(yydebug){
 			for(std::vector<SymbolInfo*>::size_type i = 0; i < $4->size(); i++){
 				logFile << "Struct item 2: " << $4->at(i)->getSymbolName() << endl;
 			} 
 		}
+		if(declarePragma){
+			write_MPI_Type_struct($2);
+		}
+		$$ = $2;
 	
 	}
 	| struct_or_union '{' struct_declaration_list '}'{
 		$1->setIsStruct(true);
-		$1->setVariableType("STRUCT");
 		$1->setParamList($3);
 		
 		$$ = $1;
@@ -292,15 +304,12 @@ struct_or_union_specifier
 	| struct_or_union IDENTIFIER
 	{ 
 		$2->setIsStruct(true);
-		$2->setVariableType("STRUCT");
+		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
-		// if (table.insert($2)) {
-		// 	logFile << "Inserted: " << $2->getSymbolName() << " in scope " << table.printScopeId() << endl;
-		// }else {
-		// 	logFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	errFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	error_count++;
-		// }
+		if(declarePragma){
+			write_MPI_Type_struct($2);
+		}
+		$$ = $2;
 	}
 	;
 
@@ -344,9 +353,19 @@ struct_declaration
 
 specifier_qualifier_list 
 	: type_qualifier { $$ = $1; }
-	| type_qualifier specifier_qualifier_list { $$ = $2; }
+	| type_qualifier specifier_qualifier_list { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
 	| type_specifier   { $$ = $1; }
-	| type_specifier specifier_qualifier_list { $$ = $2; }
+	| type_specifier specifier_qualifier_list { 
+		std::ostringstream oss;
+		oss << $1->getSymbolType() << "_" << $2->getSymbolType();
+		$2->setSymbolType(oss.str());
+		$$ = $2;
+	}
 	;
 
 struct_declarator_list
@@ -379,13 +398,13 @@ enumerator
 	;
 
 type_qualifier
-	: CONST
-	| RESTRICT
-	| VOLATILE
+	: CONST { $$ = new SymbolInfo("const", "CONST"); }
+	| RESTRICT { $$ = new SymbolInfo("restrict", "RESTRICT"); }
+	| VOLATILE { $$ = new SymbolInfo("volatile", "VOLATILE"); }
 	;
 
 function_specifier
-	: INLINE
+	: INLINE { $$ = new SymbolInfo("inline", "INLINE"); }
 	;
 
 declarator
@@ -464,7 +483,7 @@ type_qualifier_list
 
 parameter_type_list
 	: parameter_list { $$ = $1; }
-	| parameter_list ',' ELLIPSIS
+	| parameter_list ',' ELLIPSIS { $$ = $1; }
 	;
 
 parameter_list
@@ -692,4 +711,37 @@ void yyerror(char const *s)
 
 	/* fflush(stdout);
 	printf("\n%*s\n%*s\n", line_count, "^", column, s); */
+}
+
+void write_MPI_Type_struct(SymbolInfo* symbol){
+	std::ostringstream oss;
+	oss << "\n\nMPI_Datatype MPI" << symbol->getSymbolName() << "_t;\n\n";
+	oss << "void __Declare_MPI_Type_" << symbol->getSymbolName() << "() {\n";
+	oss << "    int blocklengths[" << symbol->getParamList()->size() << "];\n";
+	oss << "    MPI_Datatype old_types[" << symbol->getParamList()->size() << "];\n";
+	oss << "    MPI_Aint disp[" << symbol->getParamList()->size() << "];\n";
+	oss << "	MPI_Aint lb;\n";
+	oss << "	MPI_Aint extent;\n";
+	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
+		oss << "    blocklengths[" << i << "] = 1;\n";
+	}
+	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
+		oss << "    old_types[" << i << "] = MPI_" << symbol->getParamList()->at(i)->getVariableType() << ";\n";
+	}
+	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
+		oss << "    MPI_Type_get_extent(MPI_" << symbol->getParamList()->at(i)->getVariableType() << ", &lb, &extent);\n";
+		if(i == 0)
+			oss << "    disp[" << i << "] = lb;\n";
+		else
+			oss << "    disp[" << i << "] = disp[" << i-1 << "] + extent;\n";
+	}
+	oss << "    MPI_Type_create_struct(" << symbol->getParamList()->size() << ", blocklengths, disp, old_types, &MPI" << symbol->getSymbolName() << "_t);\n";
+	oss << "    MPI_Type_commit(&MPI" << symbol->getSymbolName() << "_t);\n";
+	oss << "}\n\n";
+	oss << "void Declare_MPI_Types() {\n";
+	oss << "    __Declare_MPI_Type_" << symbol->getSymbolName() << "();\n";
+	oss << "	return;\n";
+	oss << "}\n";
+
+	generatedFile << oss.str();
 }

@@ -22,11 +22,11 @@ static void comment(void);
 static char * get_pragma();
 // static int check_type(void);
 
-extern ofstream logFile;
-extern ofstream errFile;
+extern ofstream logFile, errFile, generatedFile;
 
 int column = 0;
 int line_count = 1;
+bool declarePragma = false;
 
 using namespace std;
 
@@ -42,7 +42,16 @@ extern int error_count;
 "#"           {
                 char * line = get_pragma();
                 char * pragma = strstr(line, "pragma");
+
                 if (pragma != NULL) {
+					if (strstr(pragma, "declare") != NULL){
+						declarePragma = true;
+						
+					}
+					else if (strstr(pragma, "end declare") != NULL){
+						declarePragma = false;
+					}
+
                     parseOpenMP(pragma+7, NULL);
                 }
               }
@@ -231,6 +240,9 @@ void count(void)
 		else
 			column++;
 
+	if(declarePragma){
+		generatedFile << yytext;
+	}
 	ECHO;
 }
 
