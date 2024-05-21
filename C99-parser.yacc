@@ -1,8 +1,9 @@
 %{
 #include<bits/stdc++.h>
-#include "1805082_SymbolTable.h"
+#include "SymbolTable.h"
+#include "MPIUtils.h"
+
 void yyerror(char const *s);
-void write_MPI_Type_struct(SymbolInfo* symbol);
 
 extern int yylex (void);
 extern FILE *yyout;
@@ -201,7 +202,7 @@ declaration
 				$2->at(i)->setIsStruct(true);
 				$2->at(i)->setParamList($1->getParamList());
 				if(declarePragma){
-					write_MPI_Type_struct($2->at(i));
+					MPIUtils::write_MPI_Type_struct($2->at(i));
 				}
 			}
 			SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
@@ -290,7 +291,7 @@ struct_or_union_specifier
 			} 
 		}
 		if(declarePragma){
-			write_MPI_Type_struct($2);
+			MPIUtils::write_MPI_Type_struct($2);
 		}
 		$$ = $2;
 	
@@ -307,7 +308,7 @@ struct_or_union_specifier
 		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
 		if(declarePragma){
-			write_MPI_Type_struct($2);
+			MPIUtils::write_MPI_Type_struct($2);
 		}
 		$$ = $2;
 	}
@@ -616,7 +617,7 @@ jump_statement
 	;
 
 translation_unit
-	: external_declaration 
+	: { MPIUtils::write_MPI_header(); } external_declaration 
 	| translation_unit external_declaration
 	;
 
@@ -711,37 +712,4 @@ void yyerror(char const *s)
 
 	/* fflush(stdout);
 	printf("\n%*s\n%*s\n", line_count, "^", column, s); */
-}
-
-void write_MPI_Type_struct(SymbolInfo* symbol){
-	std::ostringstream oss;
-	oss << "\n\nMPI_Datatype MPI" << symbol->getSymbolName() << "_t;\n\n";
-	oss << "void __Declare_MPI_Type_" << symbol->getSymbolName() << "() {\n";
-	oss << "    int blocklengths[" << symbol->getParamList()->size() << "];\n";
-	oss << "    MPI_Datatype old_types[" << symbol->getParamList()->size() << "];\n";
-	oss << "    MPI_Aint disp[" << symbol->getParamList()->size() << "];\n";
-	oss << "	MPI_Aint lb;\n";
-	oss << "	MPI_Aint extent;\n";
-	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-		oss << "    blocklengths[" << i << "] = 1;\n";
-	}
-	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-		oss << "    old_types[" << i << "] = MPI_" << symbol->getParamList()->at(i)->getVariableType() << ";\n";
-	}
-	for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-		oss << "    MPI_Type_get_extent(MPI_" << symbol->getParamList()->at(i)->getVariableType() << ", &lb, &extent);\n";
-		if(i == 0)
-			oss << "    disp[" << i << "] = lb;\n";
-		else
-			oss << "    disp[" << i << "] = disp[" << i-1 << "] + extent;\n";
-	}
-	oss << "    MPI_Type_create_struct(" << symbol->getParamList()->size() << ", blocklengths, disp, old_types, &MPI" << symbol->getSymbolName() << "_t);\n";
-	oss << "    MPI_Type_commit(&MPI" << symbol->getSymbolName() << "_t);\n";
-	oss << "}\n\n";
-	oss << "void Declare_MPI_Types() {\n";
-	oss << "    __Declare_MPI_Type_" << symbol->getSymbolName() << "();\n";
-	oss << "	return;\n";
-	oss << "}\n";
-
-	generatedFile << oss.str();
 }

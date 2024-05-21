@@ -8,7 +8,7 @@ IS                      ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 %{
 #include<bits/stdc++.h>
-#include "1805082_SymbolTable.h"
+#include "SymbolTable.h"
 #include <stdio.h>
 #include <cstring>
 #include <fstream>
@@ -54,6 +54,11 @@ extern int error_count;
 
                     parseOpenMP(pragma+7, NULL);
                 }
+				else {
+					generatedFile << "#" << line << endl;
+					line_count++;
+					column = 0;
+				}
               }
 "/*"			{ comment(); }
 "//"[^\n]*              { /* consume //-comment */ }
@@ -240,9 +245,8 @@ void count(void)
 		else
 			column++;
 
-	if(declarePragma){
-		generatedFile << yytext;
-	}
+	generatedFile << yytext;
+	
 	ECHO;
 }
 
