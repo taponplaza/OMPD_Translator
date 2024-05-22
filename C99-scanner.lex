@@ -9,6 +9,7 @@ IS                      ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 %{
 #include<bits/stdc++.h>
 #include "SymbolTable.h"
+#include "MPIUtils.h"
 #include <stdio.h>
 #include <cstring>
 #include <fstream>
@@ -23,6 +24,8 @@ static char * get_pragma();
 // static int check_type(void);
 
 extern ofstream logFile, errFile, generatedFile;
+extern MPIUtils mpi_utils;
+extern int state;
 
 int column = 0;
 int line_count = 1;
@@ -44,6 +47,7 @@ extern int error_count;
                 char * pragma = strstr(line, "pragma");
 
                 if (pragma != NULL) {
+					if (1 < state && state < 8) { state = 5; };
 					if (strstr(pragma, "declare") != NULL){
 						declarePragma = true;
 						
@@ -55,7 +59,9 @@ extern int error_count;
                     parseOpenMP(pragma+7, NULL);
                 }
 				else {
-					generatedFile << "#" << line << endl;
+					std::ostringstream oss;
+					oss << "#" << line << endl;
+					mpi_utils.insert_MPI(oss.str(), state);
 					line_count++;
 					column = 0;
 				}
@@ -88,7 +94,7 @@ extern int error_count;
 "long"			{ count(); return(LONG); }
 "register"		{ count(); return(REGISTER); }
 "restrict"		{ count(); return(RESTRICT); }
-"return"		{ count(); return(RETURN); }
+"return"		{ if (state == 6) { state = 7; }; count(); return(RETURN); }
 "short"			{ count(); return(SHORT); }
 "signed"		{ count(); return(SIGNED); }
 "sizeof"		{ count(); return(SIZEOF); }
@@ -245,7 +251,7 @@ void count(void)
 		else
 			column++;
 
-	generatedFile << yytext;
+	mpi_utils.insert_MPI(yytext, state);
 	
 	ECHO;
 }

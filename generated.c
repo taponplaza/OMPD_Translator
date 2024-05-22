@@ -1,52 +1,314 @@
-#include <assert.h>
-#include <mpi.h>
-#include <omp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
-#define NUM_THREADS 8
-
-    static unsigned long int num_steps = (unsigned long int)((1<<30)-1) ;
-    double step;
-int main (int argc, char** argv) { 
-    unsigned int i;
-    double pi;
-    double PI25DT = 3.141592653589793238462643;
-    double x;
-    double sum=0.0;
-    int factor=1;
+# include <assert.h>
+# include <mpi.h>
+# include <stdlib.h>
+# include <stdio.h>
+# include <math.h>
+# include <time.h>
+# include <sys/time.h>
+# include <omp.h>
 
 
-    struct timeval t1, t2;
-    double segundos;
+int main ( int argc, char *argv[] )
 
-    if (argc == 1) {
-        printf("num_steps %ld, ¿Factor de escala (1..4)?\n", num_steps);
-        if (scanf("%d", &factor) <= 0)
-	    printf("scanf error, factor sin cambio %d\n", factor);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+# define M 500
+# define N 500
+# define MASTER 0
+#ifdef _OPENMP
+  double start_time, run_time;
+#else
+  struct timeval tv_start, tv_end;
+  double run_time;
+#endif
+
+
+  double diff;
+  double aux_diff;
+  double epsilon;
+  int i;
+  int iterations;
+  int iterations_print;
+  int j;
+  double mean;
+  
+  char output_filename[80];
+  int success;
+  double u[M][N];
+  double w[M][N];
+
+  int __taskid = -1, __numprocs = -1;
+
+MPI_Init(&argc, &argv);
+MPI_Comm_size(MPI_COMM_WORLD,&__numprocs);
+MPI_Comm_rank(MPI_COMM_WORLD,&__taskid);
+if (__taskid == 0) {
+printf ( "\n" );
+  printf ( "HEATED_PLATE <epsilon> <fichero-salida>\n" );
+  printf ( "  C/serie version\n" );
+  printf ( "  A program to solve for the steady state temperature distribution\n" );
+  printf ( "  over a rectangular plate.\n" );
+  printf ( "\n" );
+  printf ( "  Spatial grid of %d by %d points.\n", M, N );
+
+
+
+
+  epsilon = atof(argv[1]);
+  printf("The iteration will be repeated until the change is <= %lf\n", epsilon);
+  diff = epsilon;
+
+
+
+  success = sscanf ( argv[2], "%s", output_filename );
+  if ( success != 1 )
+    {
+        printf ( "\n" );
+        printf ( "HEATED_PLATE\n" );
+        printf ( " Error en la lectura del nombre del fichero de salida\n");
+        return 1;
     }
-    else factor = atoi(argv[1]);
 
-    num_steps = num_steps * factor;
-
-    printf("%ld num_steps, %25.23f step size i: %ld size num_steps: %ld\n", num_steps, (double)1.0/(double) num_steps, sizeof(i), sizeof(num_steps));
-gettimeofday(&t1, NULL);
-
-step = 1.0/(double) num_steps;
+ printf("  The steady state solution will be written to %s\n", output_filename);
 
 
-for (i=0;i< num_steps; i++) {
-    x = (i+0.5)*step;
-    sum += 4.0/(1.0+x*x);
-}
-pi = step * sum;
 
-gettimeofday(&t2, NULL);
-segundos = (((t2.tv_usec - t1.tv_usec)/1000000.0f)  + (t2.tv_sec - t1.tv_sec));
 
-printf("Pi %25.23f, calc con %ld pasos en %f segundos\n", pi,num_steps,segundos);
-printf("Pi es %25.23f, Error relativo %10.8e\n", PI25DT, (double)100 * (pi - PI25DT)/PI25DT);
+  mean = 0.0;
+  for ( i = 1; i < M - 1; i++ )
+  {
+  	  w[i][0] = 100.0;
+      mean += w[i][0];
+  }
+  for ( i = 1; i < M - 1; i++ )
+  {
+    	w[i][N-1] = 100.0;
+      mean += w[i][N-1];
+  }
 
-return(0);
+  for ( j = 0; j < N; j++ )
+  {
+    	w[M-1][j] = 100.0;
+      mean += w[M-1][j]; 
+  }
+
+  for ( j = 0; j < N; j++ )
+  {
+      w[0][j] = 0.0;
+      mean += w[0][j];
+  }
+
+
+
+  mean = mean / ( double ) ( 2 * M + 2 * N - 4 );
+
+  printf ( "\n" );
+  printf ( "  MEAN = %lf\n", mean );
+
+
+  for ( i = 1; i < M - 1; i++ )
+    for ( j = 1; j < N - 1; j++ )
+        	w[i][j] = mean;
+ 
+
+
+  
+  iterations = 0;
+  iterations_print = 1;
+  printf ( "\n" );
+  printf ( " Iteration  Change\n" );
+  printf ( "\n" );
+
+#ifdef _OPENMP
+  start_time = omp_get_wtime();
+#else
+  gettimeofday(&tv_start, NULL);
+#endif
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+
+
+
+
+
+    }
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifdef _OPENMP
+  if (__taskid == 0) {
+run_time = omp_get_wtime() - start_time;
+#else
+  gettimeofday(&tv_end, NULL);
+  run_time=(tv_end.tv_sec - tv_start.tv_sec) * 1000000 +
+        (tv_end.tv_usec - tv_start.tv_usec); 
+  run_time = run_time/1000000; 
+#endif
+
+
+  printf ( "\n" );
+  printf ( "  %8d  %lg\n", iterations, diff );
+  printf ( "\n" );
+  printf ( "  Error tolerance achieved.\n" );
+  printf("\n Tiempo version Secuencial = %lg s\n", run_time);
+
+
+
+  output = fopen(output_filename, "wt");
+
+  fprintf(output, "%d\n", M);
+  fprintf(output, "%d\n", N);
+
+  for ( i = 0; i < M; i++ )
+  {
+    for ( j = 0; j < N; j++)
+    {
+	fprintf(output, "%lg ", w[i][j]);
+    }
+    fprintf(output, "\n");
+  }
+  fclose(output);
+
+  printf ( "\n" );
+  printf ( " Solucion escrita en el fichero %s\n", output_filename );
+
+
+
+  printf ( "\n" );
+  printf ( "HEATED_PLATE_Serie:\n" );
+  printf ( "  Normal end of execution.\n" );
+
+ }
+MPI_finalize();
+ return 0;
 }

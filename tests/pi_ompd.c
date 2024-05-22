@@ -32,15 +32,15 @@ int main (int argc, char** argv) {
 gettimeofday(&t1, NULL);
 
 step = 1.0/(double) num_steps;
-// omp_set_num_threads(NUM_THREADS);
+// // omp_set_num_threads(NUM_THREADS);
 
 #pragma omp cluster broad(num_steps, step)
 #pragma omp teams distribute reduction(+:sum)
 #pragma omp parallel for simd private(x) 
-for (i=0;i< num_steps; i++) {
-    x = (i+0.5)*step;
-    sum += 4.0/(1.0+x*x);
-}
+// for (i=0;i< num_steps; i++) {
+//     x = (i+0.5)*step;
+//     sum += 4.0/(1.0+x*x);
+// }
 pi = step * sum;
 
 gettimeofday(&t2, NULL);

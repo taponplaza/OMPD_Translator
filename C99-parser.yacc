@@ -3,12 +3,18 @@
 #include "SymbolTable.h"
 #include "MPIUtils.h"
 
+extern MPIUtils mpi_utils;
+
 void yyerror(char const *s);
+void declaration_MPI();
+void statement_MPI();
 
 extern int yylex (void);
 extern FILE *yyout;
 extern int yydebug;
 extern bool declarePragma;
+
+int state = 0;
 
 int error_count = 0;
 
@@ -192,9 +198,21 @@ constant_expression
 	;
 
 declaration
-	: declaration_specifiers ';'
+	: declaration_specifiers ';'{
+		$$ = new vector<SymbolInfo*>();
+		if($1->isStruct()){
+			table.insert($1);
+			if(declarePragma){
+				mpi_utils.write_MPI_Type_struct($1);
+			}
+			SymbolInfo* symbol = new SymbolInfo(*$1);
+			$$->push_back(symbol);
+			table.insert($1);
+		}
+	}
 	| declaration_specifiers init_declarator_list ';' {
 		$$ = new vector<SymbolInfo*>();
+		
 		for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
 			// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
 			$2->at(i)->setVariableType($1->getSymbolType());
@@ -202,12 +220,14 @@ declaration
 				$2->at(i)->setIsStruct(true);
 				$2->at(i)->setParamList($1->getParamList());
 				if(declarePragma){
-					MPIUtils::write_MPI_Type_struct($2->at(i));
+					mpi_utils.write_MPI_Type_struct($2->at(i));
 				}
 			}
-			SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
-			$$->push_back(symbol);
-			table.insert($2->at(i));
+			if(!$2->at(i)->isFunction()){
+				SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
+				$$->push_back(symbol);
+				table.insert($2->at(i));
+			}
 		}
 	}
 	;
@@ -291,7 +311,7 @@ struct_or_union_specifier
 			} 
 		}
 		if(declarePragma){
-			MPIUtils::write_MPI_Type_struct($2);
+			mpi_utils.write_MPI_Type_struct($2);
 		}
 		$$ = $2;
 	
@@ -306,10 +326,6 @@ struct_or_union_specifier
 	{ 
 		$2->setIsStruct(true);
 		$2->setVariableType($1->getSymbolType());
-		table.insert($2);
-		if(declarePragma){
-			MPIUtils::write_MPI_Type_struct($2);
-		}
 		$$ = $2;
 	}
 	;
@@ -463,6 +479,7 @@ direct_declarator
 	}
 	| direct_declarator '(' parameter_type_list ')' {
 		$1->setParamList($3);
+		$1->setIsFunction(true);
 		$$ = $1;
 	}
 	| direct_declarator '(' identifier_list ')' { $$ = $1; }
@@ -584,8 +601,8 @@ block_item_list
 	;
 
 block_item
-	: declaration
-	| statement
+	: { declaration_MPI(); } declaration
+	| { statement_MPI(); } statement
 	;
 
 expression_statement
@@ -617,8 +634,8 @@ jump_statement
 	;
 
 translation_unit
-	: { MPIUtils::write_MPI_header(); } external_declaration 
-	| translation_unit external_declaration
+	: { mpi_utils.write_MPI_header(); state = 1; } external_declaration 
+	| translation_unit external_declaration 
 	;
 
 external_declaration
@@ -631,54 +648,43 @@ function_definition
 		$2->setIsFunction(true);
 		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
-		// if (table.insert($2)) {
-		// 	logFile << "Inserted Function: " << $2->getSymbolName() << " in scope " << table.printScopeId() << endl;
-		// }
-		// else {
-		// 	logFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	errFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	error_count++;
-		// }
 		table.enterScope();
 	} declaration_list {
-	// 	for (auto symbol : *$4) {
-    //     logFile << "Debug Simbol: " << symbol->getSymbolName() << "\n";
-    // }
 		table.getSymbolInfo($2->getSymbolName())->setParamList($4);
+		if($2->getSymbolName() == "main"){
+			mpi_utils.write_MPI_init();
+			mpi_utils.write_MPI_Finalice();
+			state = 2;
+		}
 	} compound_statement {
 		$2->setIsDefined(true);
 		table.exitScope(); 
+		if($2->getSymbolName() == "main"){
+			state = 8;
+		}
 	}
 	| declaration_specifiers declarator {
 		$2->setIsFunction(true);
 		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
-		// if (table.insert($2)) {
-		// 	logFile << "Inserted Function: " << $2->getSymbolName() << " in scope " << table.printScopeId() << endl;
-		// }
-		// else {
-		// 	logFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	errFile << "Error: " << $2->getSymbolName() << " already exists in scope " << endl;
-		// 	error_count++;
-		// }
 		table.enterScope();
 		if ($2->getParamList() != nullptr) {
 			for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->getParamList()->size(); i++){
 				SymbolInfo* symbol = new SymbolInfo(*$2->getParamList()->at(i));
 				table.insert(symbol);
-				// if (table.insert(symbol)) {
-				// 	logFile << "Inserted Parameter: " << symbol->getSymbolName() << " in scope " << table.printScopeId() << endl;
-				// }
-				// else {
-				// 	logFile << "Error: " << symbol->getSymbolName() << " already exists in scope " << endl;
-				// 	errFile << "Error: " << symbol->getSymbolName() << " already exists in scope " << endl;
-				// 	error_count++;
-				// }
 			}
+		}
+		if($2->getSymbolName() == "main"){
+			mpi_utils.write_MPI_init();
+			mpi_utils.write_MPI_Finalice();
+			state = 2;
 		}
 	} compound_statement {
 		$2->setIsDefined(true);
 		table.exitScope(); 
+		if($2->getSymbolName() == "main"){
+			state = 8;
+		}
 	}
 	;
 
@@ -712,4 +718,26 @@ void yyerror(char const *s)
 
 	/* fflush(stdout);
 	printf("\n%*s\n%*s\n", line_count, "^", column, s); */
+}
+
+void declaration_MPI(){
+	if (state == 4){
+		mpi_utils.write_MPI_sec(2);
+		state = 2;
+	}
+	else if ( state == 6){
+		mpi_utils.write_MPI_sec(5);
+		state = 5;
+	}
+}
+
+void statement_MPI(){
+	if (state == 2){
+		mpi_utils.write_MPI_sec(4);
+		state = 4;
+	}
+	else if ( state == 5){
+		mpi_utils.write_MPI_sec(6);
+		state = 6;
+	}
 }
