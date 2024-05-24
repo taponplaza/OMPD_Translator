@@ -21,6 +21,7 @@ private:
     bool isArr = false;
     bool isPoint = false;
     bool isStrct = false;
+    bool hasPragma = false;
     vector<string> arrSize;
     
     
@@ -54,6 +55,7 @@ public:
         isArr = s1.isArr;
         isPoint = s1.isPoint;
         isStrct = s1.isStrct;
+        hasPragma = s1.hasPragma;
     }
 
     void setReturnType (string type){
@@ -173,9 +175,16 @@ public:
         this->hashIdx = hashIdx;
     }
 
-
     void setHashPos(int hashPos) {
         this->hashPos = hashPos;
+    }
+
+    void setHasPragma(bool set){
+        hasPragma = set;
+    }
+
+    bool getPragma(){
+        return hasPragma;
     }
 
     string getPosition() {
@@ -198,6 +207,9 @@ private:
     long long total_buckets;
     SymbolInfo **chainHashTable;
     ScopeTable *parentScope;
+
+    bool isMain = false;
+    bool hasPragma = false;
 
 public:
     ScopeTable(int n, ScopeTable *parentScope) {
@@ -395,6 +407,14 @@ public:
             currSymbol = currSymbol->getNextSymbol();
         }
         return NULL;
+    }
+
+    void setIsMain(bool set){
+        isMain = set;
+    }
+
+    bool getIsMain(){
+        return isMain;
     }
 
 
@@ -610,6 +630,16 @@ public:
             return true;
         }
         else return false;
+    }
+
+    void setIsMain(bool set){
+        ScopeTable *tempScope = currScopeTable;
+        tempScope->setIsMain(set);
+    }
+
+    bool getIsMain(){
+        ScopeTable *tempScope = currScopeTable;
+        return tempScope->getIsMain();
     }
 
     ~SymbolTable() {

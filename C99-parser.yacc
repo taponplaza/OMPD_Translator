@@ -12,7 +12,7 @@ void statement_MPI();
 extern int yylex (void);
 extern FILE *yyout;
 extern int yydebug;
-extern bool declarePragma;
+extern bool declarePragma, otherPragma;
 
 int state = 0;
 
@@ -652,6 +652,7 @@ function_definition
 	} declaration_list {
 		table.getSymbolInfo($2->getSymbolName())->setParamList($4);
 		if($2->getSymbolName() == "main"){
+			table.setIsMain(true);
 			mpi_utils.write_MPI_init();
 			mpi_utils.write_MPI_Finalice();
 			state = 2;
@@ -661,6 +662,11 @@ function_definition
 		table.exitScope(); 
 		if($2->getSymbolName() == "main"){
 			state = 8;
+		}
+		if(otherPragma){
+			SymbolInfo* symbol = table.getSymbolInfo($2->getSymbolName());
+			symbol->setHasPragma(true);
+			otherPragma = false;
 		}
 	}
 	| declaration_specifiers declarator {
@@ -675,6 +681,7 @@ function_definition
 			}
 		}
 		if($2->getSymbolName() == "main"){
+			table.setIsMain(true);
 			mpi_utils.write_MPI_init();
 			mpi_utils.write_MPI_Finalice();
 			state = 2;
@@ -684,6 +691,11 @@ function_definition
 		table.exitScope(); 
 		if($2->getSymbolName() == "main"){
 			state = 8;
+		}
+		if(otherPragma){
+			SymbolInfo* symbol = table.getSymbolInfo($2->getSymbolName());
+			symbol->setHasPragma(true);
+			otherPragma = false;
 		}
 	}
 	;

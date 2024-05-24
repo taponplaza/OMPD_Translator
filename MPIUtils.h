@@ -60,7 +60,7 @@ class MPIUtils {
 
         void write_MPI_sec(int state){
             if (state == 4){
-                csbp << "if (__taskid == 0) {\n";
+                csbp << "\nif (__taskid == 0) {\n";
                 cpl << "}\n";
             }
             else if (state == 2){
@@ -68,13 +68,13 @@ class MPIUtils {
                 cpl = std::ostringstream();
             }
             else if (state == 6){
-                csap << "if (__taskid == 0) {\n";
+                csap << "\nif (__taskid == 0) {\n";
                 cf = std::ostringstream();
                 cf << "}\n";
                 cf << "MPI_finalize();\n";
             }
             else if (state == 5){
-                csap << "}\n";
+                csap << "}\n\n";
                 cf = std::ostringstream();
                 cf << "MPI_finalize();\n";
             }
@@ -86,37 +86,43 @@ class MPIUtils {
 
 
         void insert_MPI(std::string token, int state){
-            switch(state){
-                case 0:
-                    includes << prev.str();
-                    break;
-                case 1:
-                    ossp << prev.str();
-                    break;
-                case 2:
-                    types << prev.str();
-                    break;
-                case 3:
-                    idt << prev.str();
-                    break;
-                case 4:
-                    csbp << prev.str();
-                    break;
-                case 5:
-                    cpl << prev.str();
-                    break;
-                case 6:
-                    csap << prev.str();
-                    break;
-                case 7:
-                    cf << prev.str();
-                    break;
-                case 8:
-                    ossa << prev.str();
-                    break;
+            // if (token=="\n"||token=="\t"||token=="\v"||token=="\f"){
+                // prev << token;
+                if (false){
             }
-            prev = std::ostringstream();
-            prev << token;
+            else{
+                switch(state){
+                    case 0:
+                        includes << prev.str();
+                        break;
+                    case 1:
+                        ossp << prev.str();
+                        break;
+                    case 2:
+                        types << prev.str();
+                        break;
+                    case 3:
+                        idt << prev.str();
+                        break;
+                    case 4:
+                        csbp << prev.str();
+                        break;
+                    case 5:
+                        cpl << prev.str();
+                        break;
+                    case 6:
+                        csap << prev.str();
+                        break;
+                    case 7:
+                        cf << prev.str();
+                        break;
+                    case 8:
+                        ossa << prev.str();
+                        break;
+                }
+                prev = std::ostringstream();
+                prev << token;
+            }
         }
 
         void generate_MPI_all(){

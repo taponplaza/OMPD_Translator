@@ -21,6 +21,7 @@ extern void yyerror(const char *);
 static void count(void);
 static void comment(void);
 static char * get_pragma();
+extern SymbolTable table;
 // static int check_type(void);
 
 extern ofstream logFile, errFile, generatedFile;
@@ -30,6 +31,7 @@ extern int state;
 int column = 0;
 int line_count = 1;
 bool declarePragma = false;
+bool otherPragma = false;
 
 using namespace std;
 
@@ -54,6 +56,9 @@ extern int error_count;
 					}
 					else if (strstr(pragma, "end declare") != NULL){
 						declarePragma = false;
+					}
+					else{
+						otherPragma = true;
 					}
 
                     parseOpenMP(pragma+7, NULL);
@@ -94,7 +99,11 @@ extern int error_count;
 "long"			{ count(); return(LONG); }
 "register"		{ count(); return(REGISTER); }
 "restrict"		{ count(); return(RESTRICT); }
-"return"		{ if (state == 6) { state = 7; }; count(); return(RETURN); }
+"return"		{ 
+	if (table.getIsMain()) { state = 7; }; 
+	count(); 
+	return(RETURN); 
+	}
 "short"			{ count(); return(SHORT); }
 "signed"		{ count(); return(SIGNED); }
 "sizeof"		{ count(); return(SIZEOF); }
@@ -196,6 +205,8 @@ L?\"(\\.|[^\\"\n])*\"	{ count(); return(STRING_LITERAL); }
 
 int yywrap(void)
 {
+	table.exitScope();
+    mpi_utils.generate_MPI_all();
 	return 1;
 }
 
