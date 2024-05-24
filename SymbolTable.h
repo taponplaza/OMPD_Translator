@@ -17,6 +17,7 @@ private:
     string varType = "";
     vector <SymbolInfo*>* paramList = nullptr;
     bool isFunc = false;
+    bool isType = false;
     bool isDef = false;
     bool isArr = false;
     bool isPoint = false;
@@ -52,6 +53,7 @@ public:
 
         isFunc = s1.isFunc;
         isDef = s1.isDef;
+        isType = s1.isType;
         isArr = s1.isArr;
         isPoint = s1.isPoint;
         isStrct = s1.isStrct;
@@ -72,6 +74,14 @@ public:
 
     string getVariableType() {
         return varType;
+    }
+
+    void setSymIsType(bool set){
+        isType = set;
+    }
+
+    bool getSymIsType(){
+        return isType;
     }
 
     void setParamList(vector <SymbolInfo*>* list){

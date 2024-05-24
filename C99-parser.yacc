@@ -36,7 +36,7 @@ SymbolTable table(30);
 
 %token<sym> TYPEDEF EXTERN STATIC AUTO REGISTER INLINE RESTRICT
 %token<sym> CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
-%token<sym> BOOL COMPLEX IMAGINARY
+%token<sym> BOOL COMPLEX IMAGINARY USER_DEFINED
 %token<sym> STRUCT UNION ENUM ELLIPSIS
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
@@ -45,15 +45,15 @@ SymbolTable table(30);
 
 %type<sym> type_specifier struct_or_union_specifier enum_specifier struct_or_union specifier_qualifier_list   
 %type<sym> storage_class_specifier direct_declarator declarator declaration_specifiers type_qualifier   
-%type<sym> init_declarator initializer parameter_declaration  struct_declarator      
+%type<sym> init_declarator initializer parameter_declaration  struct_declarator   
 
 %type<sym> primary_expression postfix_expression unary_expression cast_expression
 %type<sym> multiplicative_expression additive_expression shift_expression
 %type<sym> relational_expression equality_expression and_expression
 %type<sym> exclusive_or_expression inclusive_or_expression logical_and_expression
-%type<sym> logical_or_expression conditional_expression assignment_expression function_specifier
+%type<sym> logical_or_expression conditional_expression assignment_expression function_specifier 
 %type<symList> init_declarator_list parameter_type_list parameter_list struct_declaration_list struct_declarator_list struct_declaration
-%type<symList> declaration_list identifier_list declaration 
+%type<symList> declaration_list identifier_list declaration  
 
 %start translation_unit
 %%
@@ -203,7 +203,7 @@ declaration
 		if($1->isStruct()){
 			table.insert($1);
 			if(declarePragma){
-				mpi_utils.write_MPI_Type_struct($1);
+				mpi_utils.write_MPI_Type_struct($1, state);
 			}
 			SymbolInfo* symbol = new SymbolInfo(*$1);
 			$$->push_back(symbol);
@@ -211,26 +211,59 @@ declaration
 		}
 	}
 	| declaration_specifiers init_declarator_list ';' {
+		// logFile << "declaration_specifiers init_declarator_list ';' " << endl;
 		$$ = new vector<SymbolInfo*>();
-		
-		for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
-			// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
-			$2->at(i)->setVariableType($1->getSymbolType());
-			if($1->isStruct()){
-				$2->at(i)->setIsStruct(true);
-				$2->at(i)->setParamList($1->getParamList());
-				if(declarePragma){
-					mpi_utils.write_MPI_Type_struct($2->at(i));
+		if($1->isStruct()){
+			if($1->getParamList() != nullptr){
+				for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
+					// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
+					$2->at(i)->setSymIsType(true);
+					$2->at(i)->setVariableType($1->getSymbolType());				
+					$2->at(i)->setIsStruct(true);
+					$2->at(i)->setParamList($1->getParamList());
+					if(declarePragma){
+						mpi_utils.write_MPI_Type_struct($2->at(i), state);
+					}
+					SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
+					$$->push_back(symbol);
+					table.insert($2->at(i));
 				}
 			}
-			if(!$2->at(i)->isFunction()){
-				SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
-				$$->push_back(symbol);
-				table.insert($2->at(i));
+			else {
+				$1->setParamList($2);
+				if(declarePragma){
+					mpi_utils.write_MPI_Type_struct($1, state);
+				}
+				$$->push_back($1);
+				for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
+					$2->at(i)->setVariableType($1->getSymbolName());
+					table.insert($2->at(i));
+				}
+			}
+		}
+		else{
+			for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
+				// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
+				$2->at(i)->setVariableType($1->getSymbolType());
+				
+				if(!$2->at(i)->isFunction()){
+					SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
+					$$->push_back(symbol);
+					table.insert($2->at(i));
+				}
 			}
 		}
 	}
 	;
+
+/* hacky_specifiers 
+	: init_declarator_list { $$ = $1; }
+	| COLOR { $$ = new vector<SymbolInfo*>(); $$->push_back(new SymbolInfo("color", "COLOR")); }
+	;
+hacky_declaration
+	: declaration_specifiers { $$ = $1; }
+	| COLOR			{ $$ = new SymbolInfo("color", "COLOR"); }
+	; */
 
 declaration_specifiers
 	: storage_class_specifier { $$ = $1; }
@@ -294,6 +327,7 @@ type_specifier
     | BOOL          { $$ = new SymbolInfo("bool", "BOOL"); }
     | COMPLEX       { $$ = new SymbolInfo("complex", "COMPLEX"); }
     | IMAGINARY     { $$ = new SymbolInfo("imaginary", "IMAGINARY"); }
+	| USER_DEFINED  { $$ = $1; }
     | struct_or_union_specifier  { $$ = $1; }
     | enum_specifier             { $$ = $1; }
     ;
@@ -311,12 +345,13 @@ struct_or_union_specifier
 			} 
 		}
 		if(declarePragma){
-			mpi_utils.write_MPI_Type_struct($2);
+			mpi_utils.write_MPI_Type_struct($2, state);
 		}
 		$$ = $2;
 	
 	}
 	| struct_or_union '{' struct_declaration_list '}'{
+		// logFile << "struct_or_union '{' struct_declaration_list '}' " << endl;
 		$1->setIsStruct(true);
 		$1->setParamList($3);
 		
@@ -733,11 +768,7 @@ void yyerror(char const *s)
 }
 
 void declaration_MPI(){
-	if (state == 4){
-		mpi_utils.write_MPI_sec(2);
-		state = 2;
-	}
-	else if ( state == 6){
+	if ( state == 6){
 		mpi_utils.write_MPI_sec(5);
 		state = 5;
 	}

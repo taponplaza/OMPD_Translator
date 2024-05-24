@@ -49,14 +49,14 @@ extern int error_count;
                 char * pragma = strstr(line, "pragma");
 
                 if (pragma != NULL) {
-					if (1 < state && state < 8) { state = 5; };
-					if (strstr(pragma, "declare") != NULL){
-						declarePragma = true;
-						
-					}
-					else if (strstr(pragma, "end declare") != NULL){
+					if (1 < state && state < 8) { state = 5; }
+					if (strstr(pragma, "end") != NULL){
 						declarePragma = false;
 					}
+					else if (strstr(pragma, "declare") != NULL){
+						declarePragma = true;
+					}
+					
 					else{
 						otherPragma = true;
 					}
@@ -64,6 +64,10 @@ extern int error_count;
                     parseOpenMP(pragma+7, NULL);
                 }
 				else {
+					if ( state == 5){
+						mpi_utils.write_MPI_sec(6);
+						state = 6;
+					}
 					std::ostringstream oss;
 					oss << "#" << line << endl;
 					mpi_utils.insert_MPI(oss.str(), state);
@@ -119,16 +123,23 @@ extern int error_count;
 
 {L}({L}|{D})*		{
 	count();
-	SymbolInfo *s = new SymbolInfo(yytext, (char *)"IDENTIFIER");
-	yylval.sym = s;
+	SymbolInfo *s = table.getSymbolInfo(yytext);
+	if(s != NULL && s->getSymIsType()){
+		yylval.sym = new SymbolInfo(yytext, (char *) yytext);
+		return USER_DEFINED;
+	}
+	else{
+		SymbolInfo *s = new SymbolInfo(yytext, (char *)"IDENTIFIER");
+		yylval.sym = s;
 
-	// if (strlen(yytext) > 31){
-	// 	logFile << "Error at line no  " << line_count << ": " << "Length of ID exeeded 31 characters " <<  yytext << endl << endl;
-	// 	errFile << "Error at line no  " << line_count << ": " << "Length of ID exeeded 31 characters " <<  yytext << endl << endl;
-	// 	error_count++;
-	// }
+		// if (strlen(yytext) > 31){
+		// 	logFile << "Error at line no  " << line_count << ": " << "Length of ID exeeded 31 characters " <<  yytext << endl << endl;
+		// 	errFile << "Error at line no  " << line_count << ": " << "Length of ID exeeded 31 characters " <<  yytext << endl << endl;
+		// 	error_count++;
+		// }
 
-	return IDENTIFIER;
+		return IDENTIFIER;
+	}
 }
 
 0[xX]{H}+{IS}?		{ count(); return(CONSTANT); }

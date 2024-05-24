@@ -14,36 +14,40 @@ class MPIUtils {
         std::ostringstream prev;
         
     public:
-        void write_MPI_Type_struct(SymbolInfo* symbol){
-            cpl << "\n\nMPI_Datatype MPI" << symbol->getSymbolName() << "_t;\n\n";
-            cpl << "void __Declare_MPI_Type_" << symbol->getSymbolName() << "() {\n";
-            cpl << "    int blocklengths[" << symbol->getParamList()->size() << "];\n";
-            cpl << "    MPI_Datatype old_types[" << symbol->getParamList()->size() << "];\n";
-            cpl << "    MPI_Aint disp[" << symbol->getParamList()->size() << "];\n";
-            cpl << "	MPI_Aint lb;\n";
-            cpl << "	MPI_Aint extent;\n";
+        void write_MPI_Type_struct(SymbolInfo* symbol, int state){
+            std::ostringstream css;
+            css << "\n\nMPI_Datatype MPI" << symbol->getSymbolName() << "_t;\n\n";
+            css << "void __Declare_MPI_Type_" << symbol->getSymbolName() << "() {\n";
+            css << "    int blocklengths[" << symbol->getParamList()->size() << "];\n";
+            css << "    MPI_Datatype old_types[" << symbol->getParamList()->size() << "];\n";
+            css << "    MPI_Aint disp[" << symbol->getParamList()->size() << "];\n";
+            css << "	MPI_Aint lb;\n";
+            css << "	MPI_Aint extent;\n";
             for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-                cpl << "    blocklengths[" << i << "] = 1;\n";
+                css << "    blocklengths[" << i << "] = 1;\n";
             }
             for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-                cpl << "    old_types[" << i << "] = MPI_" << symbol->getParamList()->at(i)->getVariableType() << ";\n";
+                css << "    old_types[" << i << "] = MPI_" << symbol->getParamList()->at(i)->getVariableType() << ";\n";
             }
             for(std::vector<SymbolInfo*>::size_type i = 0; i < symbol->getParamList()->size(); i++){
-                cpl << "    MPI_Type_get_extent(MPI_" << symbol->getParamList()->at(i)->getVariableType() << ", &lb, &extent);\n";
+                css << "    MPI_Type_get_extent(MPI_" << symbol->getParamList()->at(i)->getVariableType() << ", &lb, &extent);\n";
                 if(i == 0)
-                    cpl << "    disp[" << i << "] = lb;\n";
+                    css << "    disp[" << i << "] = lb;\n";
                 else
-                    cpl << "    disp[" << i << "] = disp[" << i-1 << "] + extent;\n";
+                    css << "    disp[" << i << "] = disp[" << i-1 << "] + extent;\n";
             }
-            cpl << "    MPI_Type_create_struct(" << symbol->getParamList()->size() << ", blocklengths, disp, old_types, &MPI" << symbol->getSymbolName() << "_t);\n";
-            cpl << "    MPI_Type_commit(&MPI" << symbol->getSymbolName() << "_t);\n";
-            cpl << "}\n\n";
-            cpl << "void Declare_MPI_Types() {\n";
-            cpl << "    __Declare_MPI_Type_" << symbol->getSymbolName() << "();\n";
-            cpl << "	return;\n";
-            cpl << "}\n";
+            css << "    MPI_Type_create_struct(" << symbol->getParamList()->size() << ", blocklengths, disp, old_types, &MPI" << symbol->getSymbolName() << "_t);\n";
+            css << "    MPI_Type_commit(&MPI" << symbol->getSymbolName() << "_t);\n";
+            css << "}\n\n";
+            css << "void Declare_MPI_Types() {\n";
+            css << "    __Declare_MPI_Type_" << symbol->getSymbolName() << "();\n";
+            css << "	return;\n";
+            css << "}\n";
 
-            idt << "    Declare_MPI_Types();\n";
+            insert_MPI(css.str(), state);
+
+            idt = std::ostringstream();
+            idt << "\nDeclare_MPI_Types();\n";
         }
 
         void write_MPI_header(){
@@ -71,17 +75,17 @@ class MPIUtils {
                 csap << "\nif (__taskid == 0) {\n";
                 cf = std::ostringstream();
                 cf << "}\n";
-                cf << "MPI_finalize();\n";
+                cf << "MPI_Finalize();\n";
             }
             else if (state == 5){
                 csap << "}\n\n";
                 cf = std::ostringstream();
-                cf << "MPI_finalize();\n";
+                cf << "MPI_Finalize();\n";
             }
         }
 
         void write_MPI_Finalice(){
-            cf << "MPI_finalize();\n";
+            cf << "MPI_Finalize();\n";
         }
 
 
