@@ -72,7 +72,7 @@ class MainFuncion {
         }
 
         void write_type_def(){
-            if (!inic_type_def.str().empty())
+            if (inic_type_def.str().empty())
                 inic_type_def << "\nDeclare_MPI_Types();\n";
         }
 

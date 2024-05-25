@@ -163,6 +163,8 @@ MPI_Comm_size(MPI_COMM_WORLD,&__numprocs);
 MPI_Comm_rank(MPI_COMM_WORLD,&__taskid);
 
 
+Declare_MPI_Types();
+
 if (__taskid == 0) {
 #ifdef _OPENMP
 double start_time, end_time;
