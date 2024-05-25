@@ -63,22 +63,22 @@ color *juliaSet(int width,int height,float _Complex c,float radius,int iter){
 #pragma omp cluster map(broad:width, height, c, radius, iter) map(gather:rgb[height*width:chunk(width)])
 #pragma omp teams distribute dist_schedule(static,1)
 
-#pragma omp parallel for private (x,y,k,i,z0) shared(rgb,width,height)
-	for(x=0;x<height;x++){
-		k= x*width;
-#pragma omp simd
-        	for(y=0;y<width;y++){
-			z0 = mapPoint(width,height,radius,x,y);
-			i = explode (z0, c, radius, iter);
+// #pragma omp parallel for private (x,y,k,i,z0) shared(rgb,width,height)
+// 	for(x=0;x<height;x++){
+// 		k= x*width;
+// #pragma omp simd
+//         	for(y=0;y<width;y++){
+// 			z0 = mapPoint(width,height,radius,x,y);
+// 			i = explode (z0, c, radius, iter);
 
-			if (i<iter) { // Si esta fuera del Jc,
-				   // se pinta en color dependiente del #iteraciones
-				rgb[k+y] = fcolor(i,iter);
-				count++;
-			}
-		}
-	}
-	printf("Elementos fuera de Jc %d de %d\n",count, width*height);
+// 			if (i<iter) { // Si esta fuera del Jc,
+// 				   // se pinta en color dependiente del #iteraciones
+// 				rgb[k+y] = fcolor(i,iter);
+// 				count++;
+// 			}
+// 		}
+// 	}
+// 	printf("Elementos fuera de Jc %d de %d\n",count, width*height);
 	return rgb;
 }
 
@@ -100,7 +100,7 @@ float tiempo_trans;
 		printf("Uso : %s\n", "<dim de la ventana, partes real e imaginaria de c, radio, iteraciones>");
 		exit(1);
 	}
-	else{
+
 		width = atoi(argV[1]);
 		height = width; // La ventana es cuadrada
 		if (width >DIM) {
@@ -130,7 +130,6 @@ float tiempo_trans;
 	printf("Tiempo Julia = %f segundos\n", tiempo_trans/1000000);
 #endif
 	
-	}
 
 	tga_write ( width, height, rgb, "julia_set.tga" );
 

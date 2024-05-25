@@ -193,7 +193,7 @@ public:
         hasPragma = set;
     }
 
-    bool getPragma(){
+    bool getHasPragma(){
         return hasPragma;
     }
 
@@ -218,8 +218,7 @@ private:
     SymbolInfo **chainHashTable;
     ScopeTable *parentScope;
 
-    bool isMain = false;
-    bool hasPragma = false;
+    bool IsScopeReturn = false;
 
 public:
     ScopeTable(int n, ScopeTable *parentScope) {
@@ -419,12 +418,12 @@ public:
         return NULL;
     }
 
-    void setIsMain(bool set){
-        isMain = set;
+    void setIsScopeReturn(bool set){
+        IsScopeReturn = set;
     }
 
-    bool getIsMain(){
-        return isMain;
+    bool getIsScopeReturn(){
+        return IsScopeReturn;
     }
 
 
@@ -642,14 +641,14 @@ public:
         else return false;
     }
 
-    void setIsMain(bool set){
+    void setIsScopeReturn(bool set){
         ScopeTable *tempScope = currScopeTable;
-        tempScope->setIsMain(set);
+        tempScope->setIsScopeReturn(set);
     }
 
-    bool getIsMain(){
+    bool getIsScopeReturn(){
         ScopeTable *tempScope = currScopeTable;
-        return tempScope->getIsMain();
+        return tempScope->getIsScopeReturn();
     }
 
     ~SymbolTable() {

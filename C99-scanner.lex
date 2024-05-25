@@ -26,7 +26,7 @@ extern SymbolTable table;
 
 extern ofstream logFile, errFile, generatedFile;
 extern MPIUtils mpi_utils;
-extern int state;
+extern int state, level;
 
 int column = 0;
 int line_count = 1;
@@ -47,9 +47,10 @@ extern int error_count;
 "#"           {
                 char * line = get_pragma();
                 char * pragma = strstr(line, "pragma");
+				char * include = strstr(line, "include");
 
                 if (pragma != NULL) {
-					if (1 < state && state < 8) { state = 5; }
+					if (level > 0) { state = 3; }
 					if (strstr(pragma, "end") != NULL){
 						declarePragma = false;
 					}
@@ -59,18 +60,26 @@ extern int error_count;
 					
 					else{
 						otherPragma = true;
+						mpi_utils.insert_MPI("// pragma aqui\n", level, state);
 					}
 
                     parseOpenMP(pragma+7, NULL);
                 }
 				else {
-					if ( state == 5){
-						mpi_utils.write_MPI_sec(6);
-						state = 6;
-					}
 					std::ostringstream oss;
 					oss << "#" << line << endl;
-					mpi_utils.insert_MPI(oss.str(), state);
+					if ( level > 0 && state == 1){
+						state = 2;
+					}
+					else if ( level > 0 && state == 3){
+						state = 4;
+					}
+					if(include != NULL){
+						mpi_utils.insert_MPI(oss.str(), 0, 0);
+					}
+					else{
+						mpi_utils.insert_MPI(oss.str(), level, state);
+					}
 					line_count++;
 					column = 0;
 				}
@@ -104,7 +113,6 @@ extern int error_count;
 "register"		{ count(); return(REGISTER); }
 "restrict"		{ count(); return(RESTRICT); }
 "return"		{ 
-	if (table.getIsMain()) { state = 7; }; 
 	count(); 
 	return(RETURN); 
 	}
@@ -217,6 +225,7 @@ L?\"(\\.|[^\\"\n])*\"	{ count(); return(STRING_LITERAL); }
 int yywrap(void)
 {
 	table.exitScope();
+	mpi_utils.insert_MPI_buffer_line(level, state);
     mpi_utils.generate_MPI_all();
 	return 1;
 }
@@ -273,7 +282,7 @@ void count(void)
 		else
 			column++;
 
-	mpi_utils.insert_MPI(yytext, state);
+	mpi_utils.insert_MPI_token(yytext, level, state);
 	
 	ECHO;
 }

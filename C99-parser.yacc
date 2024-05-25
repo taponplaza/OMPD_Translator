@@ -6,7 +6,6 @@
 extern MPIUtils mpi_utils;
 
 void yyerror(char const *s);
-void declaration_MPI();
 void statement_MPI();
 
 extern int yylex (void);
@@ -14,7 +13,7 @@ extern FILE *yyout;
 extern int yydebug;
 extern bool declarePragma, otherPragma;
 
-int state = 0;
+int state = 0, level = 0;
 
 int error_count = 0;
 
@@ -68,8 +67,20 @@ primary_expression
 postfix_expression
 	: primary_expression {$$ = $1;}
 	| postfix_expression '[' expression ']'
-	| postfix_expression '(' ')'
-	| postfix_expression '(' argument_expression_list ')'
+	| postfix_expression '('')' {
+		SymbolInfo* symbol = table.getSymbolInfo($1->getSymbolName());
+		if(symbol != nullptr && symbol->getHasPragma()){
+			state = 3;
+		}
+		
+		}
+	| postfix_expression '(' argument_expression_list ')' {
+		SymbolInfo* symbol = table.getSymbolInfo($1->getSymbolName());
+		if(symbol != nullptr && symbol->getHasPragma()){
+			state = 3;
+		}
+
+		}
 	| postfix_expression '.' IDENTIFIER
 	| postfix_expression PTR_OP IDENTIFIER
 	| postfix_expression INC_OP
@@ -203,7 +214,7 @@ declaration
 		if($1->isStruct()){
 			table.insert($1);
 			if(declarePragma){
-				mpi_utils.write_MPI_Type_struct($1, state);
+				mpi_utils.write_MPI_Type_struct($1);
 			}
 			SymbolInfo* symbol = new SymbolInfo(*$1);
 			$$->push_back(symbol);
@@ -222,7 +233,7 @@ declaration
 					$2->at(i)->setIsStruct(true);
 					$2->at(i)->setParamList($1->getParamList());
 					if(declarePragma){
-						mpi_utils.write_MPI_Type_struct($2->at(i), state);
+						mpi_utils.write_MPI_Type_struct($2->at(i));
 					}
 					SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
 					$$->push_back(symbol);
@@ -232,7 +243,7 @@ declaration
 			else {
 				$1->setParamList($2);
 				if(declarePragma){
-					mpi_utils.write_MPI_Type_struct($1, state);
+					mpi_utils.write_MPI_Type_struct($1);
 				}
 				$$->push_back($1);
 				for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
@@ -255,15 +266,6 @@ declaration
 		}
 	}
 	;
-
-/* hacky_specifiers 
-	: init_declarator_list { $$ = $1; }
-	| COLOR { $$ = new vector<SymbolInfo*>(); $$->push_back(new SymbolInfo("color", "COLOR")); }
-	;
-hacky_declaration
-	: declaration_specifiers { $$ = $1; }
-	| COLOR			{ $$ = new SymbolInfo("color", "COLOR"); }
-	; */
 
 declaration_specifiers
 	: storage_class_specifier { $$ = $1; }
@@ -345,7 +347,7 @@ struct_or_union_specifier
 			} 
 		}
 		if(declarePragma){
-			mpi_utils.write_MPI_Type_struct($2, state);
+			mpi_utils.write_MPI_Type_struct($2);
 		}
 		$$ = $2;
 	
@@ -512,13 +514,44 @@ direct_declarator
 		$1->setIsArray(true);
 		$$ = $1;
 	}
-	| direct_declarator '(' parameter_type_list ')' {
+	| direct_declarator '(' parameter_type_list {
+		state = 1;
+		if($1->getSymbolName() == "main"){
+			level = 2;
+		}
+		else{
+			mpi_utils.write_MPI_new_func();
+			level = 1;
+		}
+
+	} ')' {
 		$1->setParamList($3);
 		$1->setIsFunction(true);
 		$$ = $1;
+
 	}
-	| direct_declarator '(' identifier_list ')' { $$ = $1; }
-	| direct_declarator '(' ')' { $$ = $1; }
+	| direct_declarator '(' identifier_list {
+		state = 1;
+		if($1->getSymbolName() == "main"){
+			level = 2;
+		}
+		else{
+			mpi_utils.write_MPI_new_func();
+			level = 1;
+		}
+
+	} ')' { $$ = $1; }
+	| direct_declarator '(' {
+		state = 1;
+		if($1->getSymbolName() == "main"){
+			level = 2;
+		}
+		else{
+			mpi_utils.write_MPI_new_func();
+			level = 1;
+		}
+
+	} ')' { $$ = $1; }
 	;
 
 pointer
@@ -636,7 +669,7 @@ block_item_list
 	;
 
 block_item
-	: { declaration_MPI(); } declaration
+	: declaration
 	| { statement_MPI(); } statement
 	;
 
@@ -664,8 +697,8 @@ jump_statement
 	: GOTO IDENTIFIER ';'
 	| CONTINUE ';'
 	| BREAK ';'
-	| RETURN ';'
-	| RETURN expression ';'
+	| RETURN { if (table.getIsScopeReturn()) { state = 5; };  } ';'
+	| RETURN { if (table.getIsScopeReturn()) { state = 5; };  } expression ';'
 	;
 
 translation_unit
@@ -684,20 +717,17 @@ function_definition
 		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
 		table.enterScope();
+		table.setIsScopeReturn(true);
+		
 	} declaration_list {
 		table.getSymbolInfo($2->getSymbolName())->setParamList($4);
-		if($2->getSymbolName() == "main"){
-			table.setIsMain(true);
-			mpi_utils.write_MPI_init();
-			mpi_utils.write_MPI_Finalice();
-			state = 2;
-		}
 	} compound_statement {
 		$2->setIsDefined(true);
 		table.exitScope(); 
-		if($2->getSymbolName() == "main"){
-			state = 8;
-		}
+		mpi_utils.insert_MPI_token("\n", level, state);
+		mpi_utils.insert_MPI_buffer_line(level, state);
+		level = 0;
+		state = 1;
 		if(otherPragma){
 			SymbolInfo* symbol = table.getSymbolInfo($2->getSymbolName());
 			symbol->setHasPragma(true);
@@ -709,24 +739,20 @@ function_definition
 		$2->setVariableType($1->getSymbolType());
 		table.insert($2);
 		table.enterScope();
+		table.setIsScopeReturn(true);
 		if ($2->getParamList() != nullptr) {
 			for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->getParamList()->size(); i++){
 				SymbolInfo* symbol = new SymbolInfo(*$2->getParamList()->at(i));
 				table.insert(symbol);
 			}
 		}
-		if($2->getSymbolName() == "main"){
-			table.setIsMain(true);
-			mpi_utils.write_MPI_init();
-			mpi_utils.write_MPI_Finalice();
-			state = 2;
-		}
 	} compound_statement {
 		$2->setIsDefined(true);
 		table.exitScope(); 
-		if($2->getSymbolName() == "main"){
-			state = 8;
-		}
+		mpi_utils.insert_MPI_token("\n", level, state);
+		mpi_utils.insert_MPI_buffer_line(level, state);
+		level = 0;
+		state = 1;
 		if(otherPragma){
 			SymbolInfo* symbol = table.getSymbolInfo($2->getSymbolName());
 			symbol->setHasPragma(true);
@@ -767,20 +793,18 @@ void yyerror(char const *s)
 	printf("\n%*s\n%*s\n", line_count, "^", column, s); */
 }
 
-void declaration_MPI(){
-	if ( state == 6){
+/* void declaration_MPI(){
+	if ( state != 0){
 		mpi_utils.write_MPI_sec(5);
 		state = 5;
 	}
-}
+} */
 
 void statement_MPI(){
-	if (state == 2){
-		mpi_utils.write_MPI_sec(4);
-		state = 4;
+	if (state == 1){
+		state = 2;
 	}
-	else if ( state == 5){
-		mpi_utils.write_MPI_sec(6);
-		state = 6;
+	else if ( state == 3){
+		state = 4;
 	}
 }
