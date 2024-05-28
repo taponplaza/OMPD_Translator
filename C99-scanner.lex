@@ -68,10 +68,7 @@ extern int error_count;
 				else {
 					std::ostringstream oss;
 					oss << "#" << line << endl;
-					if ( level > 0 && state == 1){
-						state = 2;
-					}
-					else if ( level > 0 && state == 3){
+					if ( level > 0 && state == 3){
 						state = 4;
 					}
 					if(include != NULL){
@@ -112,10 +109,7 @@ extern int error_count;
 "long"			{ count(); return(LONG); }
 "register"		{ count(); return(REGISTER); }
 "restrict"		{ count(); return(RESTRICT); }
-"return"		{ 
-	count(); 
-	return(RETURN); 
-	}
+"return"		{ count(); return(RETURN); }
 "short"			{ count(); return(SHORT); }
 "signed"		{ count(); return(SIGNED); }
 "sizeof"		{ count(); return(SIZEOF); }

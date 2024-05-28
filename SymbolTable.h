@@ -1,21 +1,22 @@
 #ifndef SYMBOLTABLE_SYMBOLTABLE_H
 #define SYMBOLTABLE_SYMBOLTABLE_H
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 
 extern ofstream logFile, sym_tables;
 extern int yydebug, error_count;
 
-class SymbolInfo {
+class SymbolInfo
+{
 private:
     string symbolName;
     string symbolType;
-    SymbolInfo *nextSymbol = nullptr;    //for chaining
+    SymbolInfo *nextSymbol = nullptr; // for chaining
     int hashIdx = 0, hashPos = 0;
 
-    string returnType = ""; 
+    string returnType = "";
     string varType = "";
-    vector <SymbolInfo*>* paramList = nullptr;
+    vector<SymbolInfo *> *paramList = nullptr;
     bool isFunc = false;
     bool isType = false;
     bool isDef = false;
@@ -24,31 +25,31 @@ private:
     bool isStrct = false;
     bool hasPragma = false;
     vector<string> arrSize;
-    
-    
-    
+
 public:
-    SymbolInfo(string name, string type) 
+    SymbolInfo(string name, string type)
         : symbolName(name), symbolType(type) {}
 
-    SymbolInfo() {
+    SymbolInfo()
+    {
         nextSymbol = NULL;
     }
 
     // copy constructor
-    SymbolInfo(const SymbolInfo & s1) {
+    SymbolInfo(const SymbolInfo &s1)
+    {
         symbolName = s1.symbolName;
         symbolType = s1.symbolType;
-        nextSymbol = s1.nextSymbol; 
+        nextSymbol = s1.nextSymbol;
         hashIdx = s1.hashIdx;
         hashPos = s1.hashPos;
-        returnType = s1.returnType;  
+        returnType = s1.returnType;
         varType = s1.varType;
 
         arrSize = std::vector<string>();
         arrSize = s1.arrSize;
 
-        paramList = new vector<SymbolInfo*>;
+        paramList = new vector<SymbolInfo *>;
         paramList = s1.paramList;
 
         isFunc = s1.isFunc;
@@ -60,44 +61,56 @@ public:
         hasPragma = s1.hasPragma;
     }
 
-    void setReturnType (string type){
+    void setReturnType(string type)
+    {
         returnType = type;
     }
 
-    string getReturnType() {
+    string getReturnType()
+    {
         return returnType;
     }
 
-    void setVariableType (string type){
+    void setVariableType(string type)
+    {
         varType = type;
     }
 
-    string getVariableType() {
+    string getVariableType()
+    {
         return varType;
     }
 
-    void setSymIsType(bool set){
+    void setSymIsType(bool set)
+    {
         isType = set;
     }
 
-    bool getSymIsType(){
+    bool getSymIsType()
+    {
         return isType;
     }
 
-    void setParamList(vector <SymbolInfo*>* list){
+    void setParamList(vector<SymbolInfo *> *list)
+    {
         paramList = list;
     }
 
-    vector <SymbolInfo*>* getParamList(){
+    vector<SymbolInfo *> *getParamList()
+    {
         return paramList;
     }
 
-    string getParamListString(){
+    string getParamListString()
+    {
         string paramListStr = "";
-        if (paramList != nullptr && !paramList->empty()){
-            for(std::vector<SymbolInfo*>::size_type i = 0; i < paramList->size(); i++){
-                paramListStr +=  "< " + paramList->at(i)->getSymbolName() + " , " + paramList->at(i)->getSymbolType() + " , " + paramList->at(i)->getVariableType() + " >";
-                if(i < paramList->size() - 1){
+        if (paramList != nullptr && !paramList->empty())
+        {
+            for (std::vector<SymbolInfo *>::size_type i = 0; i < paramList->size(); i++)
+            {
+                paramListStr += "< " + paramList->at(i)->getSymbolName() + " , " + paramList->at(i)->getSymbolType() + " , " + paramList->at(i)->getVariableType() + " >";
+                if (i < paramList->size() - 1)
+                {
                     paramListStr += ", ";
                 }
             }
@@ -105,110 +118,135 @@ public:
         return paramListStr;
     }
 
-    string getSizeList(){
+    string getSizeList()
+    {
         string sizeListStr = " Array Size: ";
-        for(std::vector<string>::size_type i = 0; i < arrSize.size(); i++){
+        for (std::vector<string>::size_type i = 0; i < arrSize.size(); i++)
+        {
             sizeListStr += (arrSize.at(i));
-            if(i < arrSize.size() - 1){
+            if (i < arrSize.size() - 1)
+            {
                 sizeListStr += ", ";
             }
         }
         return sizeListStr;
     }
 
-    void setIsFunction(bool set){
+    void setIsFunction(bool set)
+    {
         isFunc = set;
     }
 
-    void setIsStruct(bool set){
+    void setIsStruct(bool set)
+    {
         isStrct = set;
     }
 
-    bool isFunction(){
+    bool isFunction()
+    {
         return isFunc;
     }
 
-    void setIsArray(bool set){
+    void setIsArray(bool set)
+    {
         arrSize = std::vector<string>();
         isArr = set;
     }
 
-    bool isArray(){
+    bool isArray()
+    {
         return isArr;
     }
 
-    bool isStruct(){
+    bool isStruct()
+    {
         return isStrct;
     }
-    
-    void setIsPointer(bool set){
+
+    void setIsPointer(bool set)
+    {
         isPoint = set;
     }
 
-    bool isPointer(){
+    bool isPointer()
+    {
         return isPoint;
     }
 
-    void addArrSize(string size){
+    void addArrSize(string size)
+    {
         arrSize.push_back(size);
     }
 
-     void setIsDefined(bool set){
+    void setIsDefined(bool set)
+    {
         isDef = set;
     }
 
-    bool isDefined(){
+    bool isDefined()
+    {
         return isDef;
     }
 
-    string getSymbolName() {
+    string getSymbolName()
+    {
         return symbolName;
     }
 
-    void setSymbolType(string type) {
+    void setSymbolType(string type)
+    {
         symbolType = type;
     }
 
-    string getSymbolType() {
+    string getSymbolType()
+    {
         return symbolType;
     }
 
-    SymbolInfo *getNextSymbol() {
+    SymbolInfo *getNextSymbol()
+    {
         return nextSymbol;
     }
 
-    void setNextSymbol(SymbolInfo *newSymbol) {
+    void setNextSymbol(SymbolInfo *newSymbol)
+    {
         nextSymbol = newSymbol;
     }
 
-    void setHashIdx(int hashIdx) {
+    void setHashIdx(int hashIdx)
+    {
         this->hashIdx = hashIdx;
     }
 
-    void setHashPos(int hashPos) {
+    void setHashPos(int hashPos)
+    {
         this->hashPos = hashPos;
     }
 
-    void setHasPragma(bool set){
+    void setHasPragma(bool set)
+    {
         hasPragma = set;
     }
 
-    bool getHasPragma(){
+    bool getHasPragma()
+    {
         return hasPragma;
     }
 
-    string getPosition() {
+    string getPosition()
+    {
         return to_string(hashIdx) + ", " + to_string(hashPos);
     }
 
-    ~SymbolInfo() {
-    paramList = nullptr;
-    arrSize.clear();
-}
-
+    ~SymbolInfo()
+    {
+        paramList = nullptr;
+        arrSize.clear();
+    }
 };
 
-class ScopeTable {
+class ScopeTable
+{
     // the hash table
 private:
     string scopeID;
@@ -221,16 +259,19 @@ private:
     bool IsScopeReturn = false;
 
 public:
-    ScopeTable(int n, ScopeTable *parentScope) {
+    ScopeTable(int n, ScopeTable *parentScope)
+    {
         childCount = 0;
 
         this->parentScope = parentScope;
 
-        if (parentScope == NULL) {
-//            // cout << "creating  root scope with scope id " << scopeID << endl;
+        if (parentScope == NULL)
+        {
+            //            // cout << "creating  root scope with scope id " << scopeID << endl;
             scopeID = "1";
-
-        } else {
+        }
+        else
+        {
             scopeID = parentScope->scopeID + "." + to_string(parentScope->childCount);
         }
 
@@ -240,54 +281,66 @@ public:
             chainHashTable[i] = NULL;
     }
 
-    void setParentScope(ScopeTable *parentScope) {
+    void setParentScope(ScopeTable *parentScope)
+    {
         ScopeTable::parentScope = parentScope;
     }
 
-    void addChild() {
+    void addChild()
+    {
         childCount++;
     }
 
-    int getChildCount() const {
+    int getChildCount() const
+    {
         return childCount;
     }
 
-    ScopeTable *getParentScope() const {
+    ScopeTable *getParentScope() const
+    {
         return parentScope;
     }
 
-    uint32_t sdbmhash(string key) {
+    uint32_t sdbmhash(string key)
+    {
         const char *str = key.c_str();
         uint32_t hash = 0;
         int c;
 
-        while ((c = *str++)){
+        while ((c = *str++))
+        {
             hash = c + (hash << 6) + (hash << 16) - hash;
         }
         return hash % total_buckets;
     }
 
-    const string getScopeId() {
+    const string getScopeId()
+    {
         return scopeID;
     }
 
-    void insert(SymbolInfo *symbol) {
+    void insert(SymbolInfo *symbol)
+    {
         string key = symbol->getSymbolName();
 
         int posInChain = 0;
 
         int idx = sdbmhash(key);
         // // cout << "hash index: " << idx << endl;
-        if (chainHashTable[idx] == NULL) {
+        if (chainHashTable[idx] == NULL)
+        {
             // simply insert
             chainHashTable[idx] = symbol;
             symbol->setHashIdx(idx);
             symbol->setHashPos(posInChain);
-        } else {
+        }
+        else
+        {
             // traverse till the end of the linked list for this hash position
             posInChain++;
             SymbolInfo *currSymbol = chainHashTable[idx];
-            while (currSymbol->getNextSymbol() != NULL) {
+            while (currSymbol->getNextSymbol() != NULL)
+            {
                 currSymbol = currSymbol->getNextSymbol();
                 posInChain++;
             }
@@ -298,22 +351,24 @@ public:
 
         // // cout << "Inserted in ScopeTable# " << scopeID << " at position " << idx << ", " << posInChain << endl;
         // // logFile << "Inserted in ScopeTable# " << scopeID << " at position " << idx << ", " << posInChain << endl;
-
     }
 
-    bool deleteSymbolFromCurrScope(string key) {
+    bool deleteSymbolFromCurrScope(string key)
+    {
         int idx = sdbmhash(key);
 
         SymbolInfo *currSymbol = chainHashTable[idx];
 
-        if (currSymbol == NULL) {
+        if (currSymbol == NULL)
+        {
             // cout << key << " not found, cannot delete" << endl;
             // logFile << key << " not found, cannot delete" << endl;
             return false;
         }
 
         // currSymbol has no further chain
-        if (currSymbol->getSymbolName() == key && currSymbol->getNextSymbol() == NULL) {
+        if (currSymbol->getSymbolName() == key && currSymbol->getNextSymbol() == NULL)
+        {
             delete currSymbol;
             chainHashTable[idx] = NULL;
             return true;
@@ -322,16 +377,19 @@ public:
         // has chain
         SymbolInfo *parent = chainHashTable[idx];
         int c = 0;
-        while (currSymbol->getSymbolName() != key && currSymbol->getNextSymbol() != NULL) {
+        while (currSymbol->getSymbolName() != key && currSymbol->getNextSymbol() != NULL)
+        {
             parent = currSymbol;
             currSymbol = currSymbol->getNextSymbol();
             c++;
         }
 
         // when found match and the symbol is in the middle of the current table
-        if (currSymbol->getSymbolName() == key && currSymbol->getNextSymbol() != NULL) {
+        if (currSymbol->getSymbolName() == key && currSymbol->getNextSymbol() != NULL)
+        {
             // if the deleted item is at the first place of the chain, need to make the next symbol the head of the chain
-            if (c == 0) {
+            if (c == 0)
+            {
                 chainHashTable[idx] = currSymbol->getNextSymbol();
             }
             parent->setNextSymbol(currSymbol->getNextSymbol());
@@ -339,7 +397,9 @@ public:
 
             delete currSymbol;
             return true;
-        } else {
+        }
+        else
+        {
             // the symbol is at the end of the curr table
             parent->setNextSymbol(NULL);
             currSymbol->setNextSymbol(NULL);
@@ -349,47 +409,57 @@ public:
         return false;
     }
 
-    void printCurr() {
+    void printCurr()
+    {
         bool enteredScope = false;
         bool printEnter = false;
-        
-        for (int i = 0; i < total_buckets; i++) {
+
+        for (int i = 0; i < total_buckets; i++)
+        {
             SymbolInfo *currSymbol = chainHashTable[i];
-            if(enteredScope == false){
+            if (enteredScope == false)
+            {
                 // cout << "ScopeTable# " << scopeID << endl;
-             
+
                 sym_tables << "ScopeTable # " << scopeID << endl;
                 enteredScope = true;
-
             }
-            if(currSymbol != NULL){
+            if (currSymbol != NULL)
+            {
                 // cout << i << " --> ";
                 sym_tables << " " << i << " --> ";
                 printEnter = true;
             }
 
-            while (currSymbol != NULL) {
+            while (currSymbol != NULL)
+            {
                 // cout << "< " << currSymbol->getSymbolName() << " : " << currSymbol->getSymbolType() << " > ";
                 sym_tables << "| ";
-                if(currSymbol->isStruct()){
-                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Struct Symbol" << " , " << currSymbol->getVariableType() <<  " , " << currSymbol->getParamListString() << " >";
+                if (currSymbol->isStruct())
+                {
+                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Struct Symbol" << " , " << currSymbol->getVariableType() << " , " << currSymbol->getParamListString() << " >";
                 }
-                else if(currSymbol->isArray()){
-                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Array Symbol" << " , " << currSymbol->getVariableType() <<  " < " << currSymbol->getSizeList() << " > " << " >";
+                else if (currSymbol->isArray())
+                {
+                    sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Array Symbol" << " , " << currSymbol->getVariableType() << " < " << currSymbol->getSizeList() << " > " << " >";
                 }
-                else if(currSymbol->isFunction()){
+                else if (currSymbol->isFunction())
+                {
                     sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Function Symbol" << " , " << currSymbol->getVariableType() << " , " << "Parameter List: " << currSymbol->getParamListString() << " >";
                 }
-                else if(currSymbol->isPointer()){
+                else if (currSymbol->isPointer())
+                {
                     sym_tables << "< " << currSymbol->getSymbolName() << " , " << "Pointer Symbol" << " , " << currSymbol->getVariableType() << " >";
                 }
-                else{
+                else
+                {
                     sym_tables << "< " << currSymbol->getSymbolName() << " , " << currSymbol->getVariableType() << " >";
                 }
                 sym_tables << " |";
                 currSymbol = currSymbol->getNextSymbol();
             }
-            if(printEnter){
+            if (printEnter)
+            {
                 // cout << endl;
                 sym_tables << endl;
                 printEnter = false;
@@ -399,16 +469,20 @@ public:
         sym_tables << endl;
     }
 
-    SymbolInfo *lookup(string key) {
+    SymbolInfo *lookup(string key)
+    {
         int idx = sdbmhash(key);
         SymbolInfo *currSymbol = chainHashTable[idx];
-        if (currSymbol == NULL) {
+        if (currSymbol == NULL)
+        {
             return NULL;
         }
 
         int c = 0;
-        while (currSymbol != NULL) {
-            if (currSymbol->getSymbolName() == key) {
+        while (currSymbol != NULL)
+        {
+            if (currSymbol->getSymbolName() == key)
+            {
                 currSymbol->setHashPos(c);
                 return currSymbol;
             }
@@ -418,90 +492,86 @@ public:
         return NULL;
     }
 
-    void setIsScopeReturn(bool set){
+    void setIsScopeReturn(bool set)
+    {
         IsScopeReturn = set;
     }
 
-    bool getIsScopeReturn(){
+    bool getIsScopeReturn()
+    {
         return IsScopeReturn;
     }
 
-
-    // ~ScopeTable() {
-    // cout << "Destroying the current ScopeTable" << endl;
-
-    //     for (int i = 0; i < total_buckets; i++) {
-
-    //         SymbolInfo *tempSymbol = chainHashTable[i];
-    //         while(tempSymbol){
-    //             // cleaning the chains
-    //             SymbolInfo * currNext = tempSymbol->getNextSymbol();
-    //             delete tempSymbol;
-    //             tempSymbol = currNext;
-    //         }
-    //         // delete chainHashTable[i];
-    //     }
-    //     delete[] chainHashTable;
-    
-    // }
-
-    ~ScopeTable() {
-    // logFile << "Destructing ScopeTable with ID: " << scopeID << std::endl;
-    for (int i = 0; i < total_buckets; i++) {
-        // logFile << "Starting chain " << i << std::endl;
-        SymbolInfo *current = chainHashTable[i];
-        while (current != nullptr) {
-            SymbolInfo *next = current->getNextSymbol();
-            // logFile << "Deleting Symbol: " << current->getSymbolName() << " at chain " << i << std::endl;
-            // logFile << "Current Pointer: " << current << ", Next Pointer: " << next << std::endl;
-            delete current;
-            current = next;
-            if (current == nullptr) {
-                // logFile << "End of chain " << i << std::endl;
+    ~ScopeTable()
+    {
+        // logFile << "Destructing ScopeTable with ID: " << scopeID << std::endl;
+        for (int i = 0; i < total_buckets; i++)
+        {
+            // logFile << "Starting chain " << i << std::endl;
+            SymbolInfo *current = chainHashTable[i];
+            while (current != nullptr)
+            {
+                SymbolInfo *next = current->getNextSymbol();
+                // logFile << "Deleting Symbol: " << current->getSymbolName() << " at chain " << i << std::endl;
+                // logFile << "Current Pointer: " << current << ", Next Pointer: " << next << std::endl;
+                delete current;
+                current = next;
+                if (current == nullptr)
+                {
+                    // logFile << "End of chain " << i << std::endl;
+                }
             }
+            chainHashTable[i] = nullptr; // Explicitly nulling the pointer after clearing the chain
         }
-        chainHashTable[i] = nullptr;  // Explicitly nulling the pointer after clearing the chain
+        delete[] chainHashTable;  // Deletes the array of pointers
+        chainHashTable = nullptr; // Prevents dangling pointer
+        if (yydebug)
+        {
+            logFile << "ScopeTable " << scopeID << " fully destructed." << std::endl;
+        }
     }
-    delete[] chainHashTable; // Deletes the array of pointers
-    chainHashTable = nullptr; // Prevents dangling pointer
-    if(yydebug){
-        logFile << "ScopeTable " << scopeID << " fully destructed." << std::endl;
-    }
-}
-
 };
 
-
-class SymbolTable {
+class SymbolTable
+{
 private:
     ScopeTable *currScopeTable;
     int tableSize;
 
 public:
-    SymbolTable(int tableSize) {
+    SymbolTable(int tableSize)
+    {
         this->tableSize = tableSize;
         // constructing the root scopeTable here
         currScopeTable = new ScopeTable(tableSize, NULL);
     }
 
-    void enterScope() {
+    void enterScope()
+    {
         currScopeTable->addChild();
-//        Create a new ScopeTable and make it current one. Also
-//        make the previous current table as its parentScopeTable.
+        //        Create a new ScopeTable and make it current one. Also
+        //        make the previous current table as its parentScopeTable.
         currScopeTable = new ScopeTable(tableSize, currScopeTable);
         // cout << "New ScopeTable with id " << currScopeTable->getScopeId() << " created" << endl;
-        if (yydebug){
+        if (yydebug)
+        {
             logFile << "New ScopeTable with id " << currScopeTable->getScopeId() << " created" << endl;
         }
     }
 
-    void exitScope() {
-//        Remove the current ScopeTable
-        if (yydebug){ printCurrScopeTable(); }
+    void exitScope()
+    {
+        //        Remove the current ScopeTable
+        if (yydebug)
+        {
+            printCurrScopeTable();
+        }
 
-        if(!isSymbolTableEmpty()){
+        if (!isSymbolTableEmpty())
+        {
 
-            if (currScopeTable->getParentScope() == NULL) {
+            if (currScopeTable->getParentScope() == NULL)
+            {
                 // reached the root scope
                 // cout << "ScopeTable# " << currScopeTable->getScopeId() << " removed" << endl;
                 // logFile << "ScopeTable# " << currScopeTable->getScopeId() << " removed" << endl;
@@ -512,7 +582,8 @@ public:
                 delete currScopeTable;
                 currScopeTable = NULL;
             }
-            if (currScopeTable != NULL) {
+            if (currScopeTable != NULL)
+            {
                 ScopeTable *parentScope = currScopeTable->getParentScope();
                 // cout << "ScopeTable# " << currScopeTable->getScopeId() << " removed" << endl;
                 // logFile << "ScopeTable# " << currScopeTable->getScopeId() << " removed" << endl;
@@ -522,154 +593,190 @@ public:
         }
     }
 
-    bool insert(SymbolInfo *newSymbol) {
-//        Insert a symbol in current ScopeTable. Return true for
-//        successful insertion and false otherwise.
-        if(currScopeTable == NULL){
+    bool insert(SymbolInfo *newSymbol)
+    {
+        //        Insert a symbol in current ScopeTable. Return true for
+        //        successful insertion and false otherwise.
+        if (currScopeTable == NULL)
+        {
             currScopeTable = new ScopeTable(tableSize, NULL);
         }
-        
-        if (currScopeTable->lookup(newSymbol->getSymbolName()) != NULL){
+
+        if (currScopeTable->lookup(newSymbol->getSymbolName()) != NULL)
+        {
 
             // cout << "< " << newSymbol->getSymbolName() << " : " << newSymbol->getSymbolType() << " > " << " already exists in current ScopeTable" <<endl;
             // logFile << "< " << newSymbol->getSymbolName() << " : " << newSymbol->getSymbolType() << " > " << " already exists in current ScopeTable" <<endl;
             // delete newSymbol;
-            if (yydebug){
+            if (yydebug)
+            {
                 logFile << newSymbol->getSymbolName() << " already exists in ScopeTable# " << currScopeTable->getScopeId() << endl;
                 error_count++;
             }
             return false;
         }
 
-        if (yydebug){
+        if (yydebug)
+        {
             logFile << "Inserted: " << newSymbol->getSymbolName() << "at ScopeTable# " << currScopeTable->getScopeId() << endl;
         }
-        
+
         currScopeTable->insert(newSymbol);
 
         return true;
     }
 
-    bool remove(string symbol) {
-        
+    bool remove(string symbol)
+    {
+
         SymbolInfo *currSymbol = currScopeTable->lookup(symbol);
-        if (currSymbol != NULL) {
-            if (yydebug){
+        if (currSymbol != NULL)
+        {
+            if (yydebug)
+            {
                 logFile << "Found in ScopeTable# " << currScopeTable->getScopeId() << " at position " << currSymbol->getPosition() << endl;
                 logFile << "Deleted Entry " << currSymbol->getPosition() << " from current ScopeTable" << endl;
             }
             currScopeTable->deleteSymbolFromCurrScope(symbol);
             return true;
-        } 
-        
+        }
+
         // cout << symbol << " Not found" << endl;
         return false;
     }
 
-    bool lookupEntire(string symbol) {
+    bool lookupEntire(string symbol)
+    {
         ScopeTable *scope = currScopeTable;
-        while (scope) {
+        while (scope)
+        {
             SymbolInfo *currSymbol = scope->lookup(symbol);
-            if (currSymbol != NULL) {
-                if (yydebug){
+            if (currSymbol != NULL)
+            {
+                if (yydebug)
+                {
                     logFile << "Found in ScopeTable# " << scope->getScopeId() << " at position " << currSymbol->getPosition() << endl;
                 }
                 return true;
-            } else scope = scope->getParentScope();
+            }
+            else
+                scope = scope->getParentScope();
         }
-        if (yydebug){
+        if (yydebug)
+        {
             logFile << symbol << " Not found" << endl;
         }
         return false;
     }
 
-    bool lookup(string symbol) {
+    bool lookup(string symbol)
+    {
         // lookup in the current scope
         SymbolInfo *currSymbol = currScopeTable->lookup(symbol);
-        if (currSymbol != NULL) {
-            if (yydebug){
+        if (currSymbol != NULL)
+        {
+            if (yydebug)
+            {
                 logFile << "Found in ScopeTable# " << currScopeTable->getScopeId() << " at position " << currSymbol->getPosition() << endl;
             }
             return true;
-        } else return false;
-
-      
+        }
+        else
+            return false;
     }
 
-    SymbolInfo* getSymbolInfo(string symbol) {
+    SymbolInfo *getSymbolInfo(string symbol)
+    {
         ScopeTable *scope = currScopeTable;
-        while (scope) {
+        while (scope)
+        {
             SymbolInfo *currSymbol = scope->lookup(symbol);
-            if (currSymbol != NULL) {
+            if (currSymbol != NULL)
+            {
                 // cout << "Found in ScopeTable# " << scope->getScopeId() << " at position " << currSymbol->getPosition() << endl;
                 // // logFile << "Found in ScopeTable# " << scope->getScopeId() << " at position " << currSymbol->getPosition() << endl;
                 return currSymbol;
-            } else scope = scope->getParentScope();
+            }
+            else
+                scope = scope->getParentScope();
         }
         // cout << symbol << " Not found" << endl;
         // // logFile << symbol << " Not found" << endl;
         return NULL;
     }
 
-    void printCurrScopeTable() {
-        if(!isSymbolTableEmpty())
+    void printCurrScopeTable()
+    {
+        if (!isSymbolTableEmpty())
             currScopeTable->printCurr();
     }
 
-    string printScopeId() {
-        if(!isSymbolTableEmpty())
+    string printScopeId()
+    {
+        if (!isSymbolTableEmpty())
             return currScopeTable->getScopeId();
         return "No scope table found";
     }
 
-    void printAllScopeTables() {
+    void printAllScopeTables()
+    {
         ScopeTable *tempScope = currScopeTable;
 
-        while (tempScope) {
+        while (tempScope)
+        {
             tempScope->printCurr();
             tempScope = tempScope->getParentScope();
-
         }
     }
 
-    bool isSymbolTableEmpty(){
-        if(!currScopeTable){
+    bool isSymbolTableEmpty()
+    {
+        if (!currScopeTable)
+        {
             // cout << "NO CURRENT SCOPE" << endl;
             // // logFile << "NO CURRENT SCOPE" << endl;
             return true;
         }
-        else return false;
+        else
+            return false;
     }
 
-    void setIsScopeReturn(bool set){
+    void setIsScopeReturn(bool set)
+    {
         ScopeTable *tempScope = currScopeTable;
         tempScope->setIsScopeReturn(set);
     }
 
-    bool getIsScopeReturn(){
+    bool getIsScopeReturn()
+    {
         ScopeTable *tempScope = currScopeTable;
         return tempScope->getIsScopeReturn();
     }
 
-    ~SymbolTable() {
-    // logFile << "Destructing SymbolTable..." << std::endl;
-    while (currScopeTable != nullptr) {
-        ScopeTable* tempScopeTable = currScopeTable;
-        currScopeTable = currScopeTable->getParentScope();  // Move up the chain of scope tables
-        // logFile << "Destructing ScopeTable with ID: " << tempScopeTable->getScopeId() << std::endl;
-        delete tempScopeTable;  // Delete the current scope table
-        tempScopeTable = nullptr;  // Ensure pointer is null after deletion
-        if (currScopeTable != nullptr) {
-            // logFile << "Moving to parent ScopeTable with ID: " << currScopeTable->getScopeId() << std::endl;
-        } else {
-            // logFile << "No more ScopeTables to destruct." << std::endl;
+    ~SymbolTable()
+    {
+        // logFile << "Destructing SymbolTable..." << std::endl;
+        while (currScopeTable != nullptr)
+        {
+            ScopeTable *tempScopeTable = currScopeTable;
+            currScopeTable = currScopeTable->getParentScope(); // Move up the chain of scope tables
+            // logFile << "Destructing ScopeTable with ID: " << tempScopeTable->getScopeId() << std::endl;
+            delete tempScopeTable;    // Delete the current scope table
+            tempScopeTable = nullptr; // Ensure pointer is null after deletion
+            // if (currScopeTable != nullptr)
+            // {
+            //     // logFile << "Moving to parent ScopeTable with ID: " << currScopeTable->getScopeId() << std::endl;
+            // }
+            // else
+            // {
+            //     // logFile << "No more ScopeTables to destruct." << std::endl;
+            // }
+        }
+        if (yydebug)
+        {
+            logFile << "SymbolTable fully destructed." << std::endl;
         }
     }
-    if(yydebug){
-        logFile << "SymbolTable fully destructed." << std::endl;
-    }
-}
 };
 
-
-#endif //SYMBOLTABLE_SYMBOLTABLE_H
+#endif // SYMBOLTABLE_SYMBOLTABLE_H

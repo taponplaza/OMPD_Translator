@@ -11,7 +11,7 @@
 int __taskid = -1, __numprocs = -1;
 
 
-#define DIM 4096
+#define DIM 8192
 
 typedef struct{
 	unsigned char bl,gr,re;
@@ -65,9 +65,9 @@ color fcolor(int iter,int num_its){
         color c;
 
 
-        c.re = 255;
-        c.gr = (iter*20)%255;
-        c.bl = (iter*20)%255;
+        c.re = (iter*20+0)%255;
+        c.gr = (iter*20+85)%255;
+        c.bl = (iter*20+170)%255;
         return c;
 }
 int explode (float _Complex z0, float _Complex c, float radius, int n)
@@ -108,7 +108,85 @@ if (__taskid == 0) {
 // pragma aqui
 // pragma aqui
 
+{
+MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
+MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+MPI_Bcast(&c, sizeof(float _Complex ), MPI_PACKED, 0, MPI_COMM_WORLD);
+MPI_Bcast(&radius, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+MPI_Bcast(&iter, 1, MPI_INT, 0, MPI_COMM_WORLD);
+//Esto es por si se envía la parte real e imaginaria como dos floats en vez 
+//	de como un complejo
+// float re, im;
+// if (__taskid == 0) {
+//     re = crealf(c);
+//     im = cimagf(c);
+// }
+// MPI_Bcast(&re, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+// MPI_Bcast(&im, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
+// c=re+im*I;
+// MPIcolor * __rgb = ( MPIcolor * ) malloc ( height * width * sizeof (MPIcolor));
+color * __rgb = ( color * ) malloc ( height * width * sizeof(color));
+int __start = __taskid * 1; // x chunk
+int __end = height;
+int __step = __numprocs * 1; // x chunk
+
+printf("JuliaSet MPI: %d, %d, %f, %f, %ld, %f, %d. Task %d, from %d to %d, ++(%d)\n", width, height,creal(c),cimag(c),sizeof(c),radius,iter,__taskid,__start,__end,__step);
+
+#pragma omp parallel for private (x,y,k,i,z0) shared(rgb,width,height) num_threads(20) schedule(dynamic,1)
+	for(x=__start;x<__end;x+=__step){
+		k= x*width;
+#pragma omp simd
+        	for(y=0;y<width;y++){
+			z0 = mapPoint(width,height,radius,x,y);
+			i = explode (z0, c, radius, iter);
+
+			if (i<iter) { // Si esta fuera del Jc,
+				      // se pinta en color dependiente del #iteraciones
+				__rgb[k+y] = fcolor(i,iter);
+				count++;
+			}
+		}
+	}
+printf("Taskid %d, Elementos fuera de Jc %d de %d\n", __taskid, count, width*height/__numprocs);
+
+int *displs_rgb = (int *)malloc(__numprocs*sizeof(int));
+int *counts_rgb = (int *)malloc(__numprocs*sizeof(int));
+int offset_rgb = 0;
+
+while (offset_rgb < height * width) {
+  if (__taskid == 0) {
+    for (i=0; i < __numprocs; i++) {
+        if (offset_rgb < height*width) {
+            counts_rgb[i] = width; // chunk
+            displs_rgb[i] = offset_rgb;
+            offset_rgb += width;
+        }
+        else {
+            counts_rgb[i] = 0;
+            displs_rgb[i] = height*width;
+        }
+//printf("Task %d: counts_rgb[%d]: %d displs_rgb[%d]: %d\n", __taskid, i, counts_rgb[i], i, displs_rgb[i]);
+    }
+  }
+  else {
+        if (offset_rgb + width * __taskid < height *width) {
+            counts_rgb[__taskid] = width; // chunk
+            displs_rgb[__taskid] = offset_rgb + width * __taskid;
+            offset_rgb += width * __numprocs;
+        }
+        else {
+            counts_rgb[__taskid] = 0;
+            displs_rgb[__taskid] = height*width;
+            offset_rgb += width * __numprocs;
+        }
+//printf("Task %d: counts_rgb[%d]: %d displs_rgb[%d]: %d\n", __taskid, __taskid, counts_rgb[__taskid], __taskid, displs_rgb[__taskid]);
+  }
+  MPI_Gatherv(__rgb+displs_rgb[__taskid], counts_rgb[__taskid], MPIcolor_t,
+	      rgb, counts_rgb, displs_rgb, MPIcolor_t, 0, MPI_COMM_WORLD);
+}
+
+}
 
 
 
@@ -152,20 +230,12 @@ void tga_write ( int w, int h, color rgb[], char *filename )
 
   return;
 }
-int main(int argC, char* argV[])
+int main(int argc, char* argv[])
 {
 int width, height;
 float _Complex c;
 color *rgb;
 
-MPI_Init(&argc, &argv);
-MPI_Comm_size(MPI_COMM_WORLD,&__numprocs);
-MPI_Comm_rank(MPI_COMM_WORLD,&__taskid);
-
-
-Declare_MPI_Types();
-
-if (__taskid == 0) {
 #ifdef _OPENMP
 double start_time, end_time;
 #else
@@ -174,30 +244,38 @@ float tiempo_trans;
 #endif
 
  
-	if(argC != 6) {
+MPI_Init(&argc, &argv);
+MPI_Comm_size(MPI_COMM_WORLD,&__numprocs);
+MPI_Comm_rank(MPI_COMM_WORLD,&__taskid);
+
+
+Declare_MPI_Types();
+
+if (__taskid == 0) {
+	if(argc != 6) {
 		printf("Uso : %s\n", "<dim de la ventana, partes real e imaginaria de c, radio, iteraciones>");
 		exit(1);
 	}
 
-		width = atoi(argV[1]);
+		width = atoi(argv[1]);
 		height = width; 
 		if (width >DIM) {
                    printf("El tamanyo de la ventana deben ser menor que 1024\n");
                    exit(1);
                 }
-		float re = atof(argV[2]);
-                float im = atof(argV[3]);
+		float re = atof(argv[2]);
+                float im = atof(argv[3]);
 
                 c=re+im*I;
 
-	printf("JuliaSet: %d, %d, %f, %f, %f, %d\n", width, height,creal(c),cimag(c),atof(argV[4]),atoi(argV[5]));
+	printf("JuliaSet: %d, %d, %f, %f, %f, %d\n", width, height,creal(c),cimag(c),atof(argv[4]),atoi(argv[5]));
 #ifdef _OPENMP
 	start_time = omp_get_wtime();
 #else
 	gettimeofday(&tv_start, NULL);
 #endif
 }
-	rgb = juliaSet(width,height,c,atof(argV[4]), atoi(argV[5]));
+	rgb = juliaSet(width,height,c,atof(argv[4]), atoi(argv[5]));
 
 
 if (__taskid == 0) {

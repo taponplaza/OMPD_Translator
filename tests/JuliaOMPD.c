@@ -6,7 +6,7 @@
 #include<tgmath.h>
 #include <sys/time.h>
 
-#define DIM 4096
+#define DIM 8192
 
 #pragma omp declare cluster  
 typedef struct{
@@ -20,9 +20,9 @@ color fcolor(int iter,int num_its){
         color c;
 
 // Poner un color dependiente del no. de iteraciones
-        c.re = 255;
-        c.gr = (iter*20)%255;
-        c.bl = (iter*20)%255;
+        c.re = (iter*20+0)%255;
+        c.gr = (iter*20+85)%255;
+        c.bl = (iter*20+170)%255;
         return c;
 }
 
@@ -82,7 +82,7 @@ color *juliaSet(int width,int height,float _Complex c,float radius,int iter){
 	return rgb;
 }
 
-int main(int argC, char* argV[])
+int main(int argc, char* argv[])
 {
 int width, height;
 float _Complex c;
@@ -96,29 +96,29 @@ float tiempo_trans;
 #endif
 
  
-	if(argC != 6) {
+	if(argc != 6) {
 		printf("Uso : %s\n", "<dim de la ventana, partes real e imaginaria de c, radio, iteraciones>");
 		exit(1);
 	}
 
-		width = atoi(argV[1]);
+		width = atoi(argv[1]);
 		height = width; // La ventana es cuadrada
 		if (width >DIM) {
                    printf("El tamanyo de la ventana deben ser menor que 1024\n");
                    exit(1);
                 }
-		float re = atof(argV[2]);
-                float im = atof(argV[3]);
+		float re = atof(argv[2]);
+                float im = atof(argv[3]);
 
                 c=re+im*I;
 
-	printf("JuliaSet: %d, %d, %f, %f, %f, %d\n", width, height,creal(c),cimag(c),atof(argV[4]),atoi(argV[5]));
+	printf("JuliaSet: %d, %d, %f, %f, %f, %d\n", width, height,creal(c),cimag(c),atof(argv[4]),atoi(argv[5]));
 #ifdef _OPENMP
 	start_time = omp_get_wtime();
 #else
 	gettimeofday(&tv_start, NULL);
 #endif
-	rgb = juliaSet(width,height,c,atof(argV[4]), atoi(argV[5]));
+	rgb = juliaSet(width,height,c,atof(argv[4]), atoi(argv[5]));
 
 #ifdef _OPENMP
 	end_time = omp_get_wtime();
