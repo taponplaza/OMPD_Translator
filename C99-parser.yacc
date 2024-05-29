@@ -224,11 +224,12 @@ declaration
 	| declaration_specifiers init_declarator_list ';' {
 		// logFile << "declaration_specifiers init_declarator_list ';' " << endl;
 		$$ = new vector<SymbolInfo*>();
+		bool hasTypedef = (strstr($1->getSymbolType().c_str(), "TYPEDEF") != NULL);
 		if($1->isStruct()){
 			if($1->getParamList() != nullptr){
 				for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
 					// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
-					$2->at(i)->setSymIsType(true);
+					if(hasTypedef) $2->at(i)->setSymIsType(true);
 					$2->at(i)->setVariableType($1->getSymbolType());				
 					$2->at(i)->setIsStruct(true);
 					$2->at(i)->setParamList($1->getParamList());
@@ -256,7 +257,7 @@ declaration
 			for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
 				// logFile << "Debug: " << $1->getSymbolType() << " Debug: " << $2->at(i)->getSymbolName() << " Debug: " << $2->at(i)->getVariableType() << endl;
 				$2->at(i)->setVariableType($1->getSymbolType());
-				
+				if(hasTypedef) $2->at(i)->setSymIsType(true);
 				if(!$2->at(i)->isFunction()){
 					SymbolInfo* symbol = new SymbolInfo(*$2->at(i));
 					$$->push_back(symbol);
@@ -340,14 +341,10 @@ struct_or_union_specifier
 		$2->setIsStruct(true);
 		$2->setVariableType($1->getSymbolType());
 		$2->setParamList($4);
-		table.insert($2);
 		if(yydebug){
 			for(std::vector<SymbolInfo*>::size_type i = 0; i < $4->size(); i++){
 				logFile << "Struct item 2: " << $4->at(i)->getSymbolName() << endl;
 			} 
-		}
-		if(declarePragma){
-			mpi_utils.write_MPI_Type_struct($2);
 		}
 		$$ = $2;
 	
