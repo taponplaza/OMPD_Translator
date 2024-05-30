@@ -210,12 +210,9 @@ constant_expression
 
 declaration
 	: declaration_specifiers ';'{
-		$$ = new vector<SymbolInfo*>();
 		if($1->isStruct()){
+			$$ = new vector<SymbolInfo*>();
 			table.insert($1);
-			if(declarePragma){
-				mpi_utils.write_MPI_Type_struct($1);
-			}
 			SymbolInfo* symbol = new SymbolInfo(*$1);
 			$$->push_back(symbol);
 			table.insert($1);
@@ -242,14 +239,12 @@ declaration
 				}
 			}
 			else {
-				$1->setParamList($2);
-				if(declarePragma){
-					mpi_utils.write_MPI_Type_struct($1);
-				}
-				$$->push_back($1);
 				for(std::vector<SymbolInfo*>::size_type i = 0; i < $2->size(); i++){
-					$2->at(i)->setVariableType($1->getSymbolName());
+					std::ostringstream oss = std::ostringstream();
+					oss << $1->getVariableType() << "_" << $1->getSymbolName();
+					$2->at(i)->setVariableType(oss.str());
 					table.insert($2->at(i));
+					$$->push_back($2->at(i));
 				}
 			}
 		}
