@@ -212,7 +212,6 @@ declaration
 	: declaration_specifiers ';'{
 		if($1->isStruct()){
 			$$ = new vector<SymbolInfo*>();
-			table.insert($1);
 			SymbolInfo* symbol = new SymbolInfo(*$1);
 			$$->push_back(symbol);
 			table.insert($1);
