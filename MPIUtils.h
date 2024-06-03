@@ -188,7 +188,7 @@ public:
         var_glob << "    return;\n";
         var_glob << "}\n";
 
-        mainFuncion->write_type_def(); // Corrección de acceso a puntero
+        mainFuncion->write_type_def();
     }
 
     void write_MPI_header()

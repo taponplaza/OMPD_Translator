@@ -1,0 +1,23 @@
+ScopeTable # 1.1.1
+
+ScopeTable # 1.1
+ 2 --> | < part_num , INT > |
+ 3 --> | < particles , Pointer Symbol , Particle > |
+ 6 --> | < argv , Pointer Symbol , CHAR > || < dt , FLOAT > |
+ 15 --> | < i , INT > |
+ 17 --> | < argc , INT > |
+ 23 --> | < step_num , INT > |
+ 26 --> | < t , INT > |
+
+ScopeTable # 1.2.1
+
+ScopeTable # 1.2
+ 15 --> | < i , INT > |
+ 22 --> | < p , Array Symbol , Particle <  Array Size:  >  > |
+ 25 --> | < nelem , INT > |
+
+ScopeTable # 1
+ 7 --> | < main , Function Symbol , INT , Parameter List: < argc , IDENTIFIER , INT >, < argv , IDENTIFIER , CHAR > > |
+ 20 --> | < Particle , Struct Symbol , TYPEDEF_STRUCT , < x , IDENTIFIER , FLOAT >, < y , IDENTIFIER , FLOAT >, < z , IDENTIFIER , FLOAT >, < velocity , IDENTIFIER , DOUBLE >, < n , IDENTIFIER , INT >, < type , IDENTIFIER , CHAR > > |
+ 22 --> | < init , Function Symbol , VOID , Parameter List: < p , IDENTIFIER , Particle >, < nelem , IDENTIFIER , INT > > |
+

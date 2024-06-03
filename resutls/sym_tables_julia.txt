@@ -1,0 +1,70 @@
+ScopeTable # 1.1
+ 4 --> | < iter , INT > |
+ 9 --> | < num_its , INT > || < c , color > |
+
+ScopeTable # 1.2.1
+
+ScopeTable # 1.2
+ 2 --> | < radius , FLOAT > |
+ 9 --> | < c , FLOAT_COMPLEX > |
+ 17 --> | < k , INT > || < modul , FLOAT > |
+ 20 --> | < n , INT > |
+ 26 --> | < z0 , FLOAT_COMPLEX > |
+
+ScopeTable # 1.3
+ 0 --> | < x , INT > |
+ 1 --> | < y , INT > |
+ 2 --> | < radius , FLOAT > |
+ 4 --> | < im , FLOAT > |
+ 5 --> | < height , INT > |
+ 9 --> | < c , FLOAT_COMPLEX > |
+ 14 --> | < width , INT > |
+ 17 --> | < re , FLOAT > |
+ 18 --> | < l , INT > |
+
+ScopeTable # 1.4
+ 0 --> | < x , INT > |
+ 1 --> | < y , INT > |
+ 2 --> | < radius , FLOAT > |
+ 4 --> | < iter , INT > |
+ 5 --> | < height , INT > |
+ 9 --> | < c , FLOAT_COMPLEX > |
+ 14 --> | < width , INT > |
+ 15 --> | < i , INT > || < count , INT > || < rgb , Pointer Symbol , color > |
+ 17 --> | < k , INT > |
+ 26 --> | < z0 , FLOAT_COMPLEX > |
+
+ScopeTable # 1.5.1
+
+ScopeTable # 1.5.2
+
+ScopeTable # 1.5
+ 3 --> | < tiempo_trans , FLOAT > |
+ 4 --> | < im , FLOAT > |
+ 5 --> | < height , INT > |
+ 6 --> | < argv , Array Symbol , CHAR <  Array Size:  >  > |
+ 8 --> | < start_time , DOUBLE > |
+ 9 --> | < c , FLOAT_COMPLEX > |
+ 10 --> | < tv_end , STRUCT_timeval > |
+ 14 --> | < width , INT > |
+ 15 --> | < rgb , Pointer Symbol , color > |
+ 17 --> | < argc , INT > || < re , FLOAT > |
+ 21 --> | < tv_start , STRUCT_timeval > |
+ 23 --> | < end_time , DOUBLE > |
+
+ScopeTable # 1.6
+ 1 --> | < filename , Pointer Symbol , CHAR > |
+ 12 --> | < header1 , Array Symbol , UNSIGNED_CHAR <  Array Size: 12 >  > |
+ 13 --> | < header2 , Array Symbol , UNSIGNED_CHAR <  Array Size: 6 >  > |
+ 14 --> | < h , INT > |
+ 15 --> | < rgb , Array Symbol , color <  Array Size:  >  > |
+ 29 --> | < w , INT > |
+
+ScopeTable # 1
+ 5 --> | < fcolor , Function Symbol , color , Parameter List: < iter , IDENTIFIER , INT >, < num_its , IDENTIFIER , INT > > || < juliaSet , Function Symbol , color , Parameter List: < width , IDENTIFIER , INT >, < height , IDENTIFIER , INT >, < c , IDENTIFIER , FLOAT_COMPLEX >, < radius , IDENTIFIER , FLOAT >, < iter , IDENTIFIER , INT > > |
+ 6 --> | < tga_write , Function Symbol , VOID , Parameter List: < w , IDENTIFIER , INT >, < h , IDENTIFIER , INT >, < rgb , IDENTIFIER , color >, < filename , IDENTIFIER , CHAR > > |
+ 7 --> | < main , Function Symbol , INT , Parameter List: < argc , IDENTIFIER , INT >, < argv , IDENTIFIER , CHAR > > |
+ 17 --> | < color , Struct Symbol , TYPEDEF_STRUCT , < bl , IDENTIFIER , UNSIGNED_CHAR >, < gr , IDENTIFIER , UNSIGNED_CHAR >, < re , IDENTIFIER , UNSIGNED_CHAR > > |
+ 24 --> | < mapPoint , Function Symbol , FLOAT_COMPLEX , Parameter List: < width , IDENTIFIER , INT >, < height , IDENTIFIER , INT >, < radius , IDENTIFIER , FLOAT >, < x , IDENTIFIER , INT >, < y , IDENTIFIER , INT > > |
+ 25 --> | < explode , Function Symbol , INT , Parameter List: < z0 , IDENTIFIER , FLOAT_COMPLEX >, < c , IDENTIFIER , FLOAT_COMPLEX >, < radius , IDENTIFIER , FLOAT >, < n , IDENTIFIER , INT > > |
+

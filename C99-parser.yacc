@@ -3,11 +3,13 @@
 #include "SymbolTable.h"
 #include "MPIUtils.h"
 
+// Declaración de un objeto MPIUtils
 extern MPIUtils mpi_utils;
 
 void yyerror(char const *s);
 void statement_MPI();
 
+// Declaración de variables globales
 extern int yylex (void);
 extern FILE *yyout;
 extern int yydebug;
@@ -71,6 +73,7 @@ postfix_expression
 		SymbolInfo* symbol = table.getSymbolInfo($1->getSymbolName());
 		if(symbol != nullptr && symbol->getHasPragma()){
 			state = 3;
+			otherPragma = true;
 		}
 		
 		}
@@ -78,6 +81,7 @@ postfix_expression
 		SymbolInfo* symbol = table.getSymbolInfo($1->getSymbolName());
 		if(symbol != nullptr && symbol->getHasPragma()){
 			state = 3;
+			otherPragma = true;
 		}
 
 		}
@@ -650,8 +654,8 @@ labeled_statement
 	;
 
 compound_statement
-	: '{' '}'
-	| '{' block_item_list '}'
+	: '{' { if (table.getIsScopeReturn()) { state = 5; };  }'}'
+	| '{' block_item_list { if (table.getIsScopeReturn()) { state = 5; };  }'}'
 	;
 
 block_item_list
